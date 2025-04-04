@@ -40,11 +40,11 @@ if __name__ == "__main__":
 
         varredura = 5
 
-        diretorioAtual = os.getcwd()
+        diretorio = ""
 
         extensaoArquivo = '*.txt'
 
-        buscaDosTxts = os.path.join(diretorioAtual, extensaoArquivo)
+        buscaDosTxts = os.path.join(diretorio, extensaoArquivo)
 
         arrayCaminhosTxt = glob.glob(buscaDosTxts)
 
