@@ -54,12 +54,7 @@ if __name__ == "__main__":
 
         arrayNomesTxt = [os.path.basename(itemDoCaminhosTxt) for itemDoCaminhosTxt in arrayCaminhosTxt]
 
-        # Array para armazenar as arrays de velocidade de subida 
-        # de cada arquivo
-        arrayDasArraysVelocidadeSubida = []
-
-        # E as de velocidade de descida
-        arrayDasArraysVelocidadeDescida = []
+        
 
         arrayDasArraysVelocidadeSubidaLeitura = []
 
@@ -93,9 +88,7 @@ if __name__ == "__main__":
             print(f"\nArquivo {arrayNomesTxt[i]}\n")
 
 
-            arrayDasArraysVelocidadeSubida.append([])
-
-            arrayDasArraysVelocidadeDescida.append([])
+           
 
             arrayDasArraysVelocidadeSubidaLeitura.append([])
 
@@ -137,7 +130,7 @@ if __name__ == "__main__":
 
                 def atribuicaoVelocidadeDescida():
 
-                    #arrayDasArraysVelocidadeDescida[i].append(abs(velocidade))
+                    
 
                     arrayDasArraysVelocidadeDescidaLeitura[i].append(velocidade)
 
@@ -145,7 +138,7 @@ if __name__ == "__main__":
 
                 def atribuicaoVelocidadeSubida():
 
-                    #arrayDasArraysVelocidadeSubida[i].append(abs(velocidade))
+                    
 
                     arrayDasArraysVelocidadeSubidaLeitura[i].append(velocidade)
 
