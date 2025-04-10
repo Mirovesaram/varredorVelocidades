@@ -50,8 +50,47 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
+                self.pushButtonSelecPasta.clicked.connect(self.buscarDirArquivosTxt)
+
+                # ATRIBUTOS
+
+                # Array das arrays de velocidades de subida e descida
+                self.arrayDasArraysVelSub = []
+
+                self.arrayDasArraysVelDes = []
+
+                # Array das arrays dos instantes correspondentes 
+                # a essas velocidades de subida e descida
+                self.arrayDasArraysVelSubInstantes = []
+
+                self.arrayDasArraysVelDesInstantes = []
+
+                # Array de desvios padrões amostrais das velocidades 
+                # de subida e descida
+                self.arrayDesvPadAmostVelSub = []
+
+                self.arrayDesvPadAmostVelDes = []
+
+                #Array de médias das velocidades de subida e descida
+                self.arrayMediaVelSub = []
+
+                self.arrayMediaVelDes = []
+
+                # Array de desvios padrões amostrais da média de (erros) 
+                # velocidades de subida e descida
+                self.arrayDesvPadAmostMediaVelDes = []
+
+                self.arrayDesvPadAmostMediaVelSub = []
+
+                # Array dos caminhos dos arquivos .txt
+                self.arrayCaminhosArquivos = None
+
+                # Inicialização do atributo diretório
+                self.diretorio = None
             
             def buscarDirArquivosTxt(self):
+
+                self.diretorio = None
                 
                 diretorio=None      
                 
@@ -65,11 +104,19 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
                     
                     self.textEditCaminhoPasta.setText(diretorio)
 
-                    return diretorio
+                    self.diretorio = diretorio
+
+                    # Para fins de teste
+
+                    #print(self.diretorio)
                 
                 else:
 
-                    self.textEditCaminhoPasta.setText('O caminho aparecerá aqui quando selecionado')
+                    self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+                    
+                    # Para fins de teste
+
+                    #print(self.diretorio)
             
 
         
