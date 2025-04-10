@@ -12,7 +12,7 @@ import matplotlib
 
 import numpy as np
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox
 
 from interfaceGerada.janelaAtribuicao import Ui_janelaAtribuicao
 
@@ -28,6 +28,12 @@ def resource_path(caminho_relativo):
         caminho_base = os.path.abspath(".")
 
     return os.path.join(caminho_base, caminho_relativo)
+
+logging.basicConfig(
+    filename=r'relatorioErros.log',
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 #Método para capturar erros de forma global
 def capturarExcecao(exctype,value,tb):
@@ -50,9 +56,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
+                # GATILHOS #
+
                 self.pushButtonSelecPasta.clicked.connect(self.buscarDirArquivosTxt)
 
-                # ATRIBUTOS
+                self.pushButton_executar.clicked.connect(self.executarCalculos)
+
+                # ATRIBUTOS #
 
                 # Array das arrays de velocidades de subida e descida
                 self.arrayDasArraysVelSub = []
@@ -87,6 +97,12 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 # Inicialização do atributo diretório
                 self.diretorio = None
+
+                self.voltagem = None
+
+                self.densGot = None
+
+                self.distPlacs = None
             
             def buscarDirArquivosTxt(self):
 
@@ -117,6 +133,37 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
                     # Para fins de teste
 
                     #print(self.diretorio)
+
+            def executarCalculos(self):
+                 
+                 densGot = self.doubleSpinBoxDensGot.value()
+
+                 distPlacs = self.doubleSpinBox_distPlacs.value()
+
+                 voltagem = self.doubleSpinBox_voltagem.value()
+                 
+                 if densGot != 0 and voltagem != 0 and distPlacs != 0:
+                    
+                    if self.diretorio:
+
+                        self.voltagem = voltagem
+
+                        self.densGot = densGot
+
+                        self.distPlacs = distPlacs
+
+                        # Para fins de teste
+
+                        #print(f"{voltagem}, {distPlacs}, {densGot}")
+
+                    else:
+
+                        QMessageBox.warning(self, "Erro", "Você não escolheu uma pasta.")
+                 
+                 else:
+                      
+                      QMessageBox.warning(self, "Erro", "Preencha os campos corretamente. Algum deles está nulo.")
+                      
             
 
         

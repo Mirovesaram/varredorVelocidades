@@ -1,0 +1,104 @@
+2025-04-09 21:52:01,225 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 149, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 61, in __init__
+    self.janelaAtribuicoes = Ui_janelaAtribuicao(self)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Ui_janelaAtribuicao() takes no arguments
+
+2025-04-09 21:54:49,825 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 150, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 62, in __init__
+    self.janelaAtribuicoes.setupUi(self)
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\interfaceGerada\janelaAtribuicao.py", line 16, in setupUi
+    janelaAtribuicao.setObjectName("janelaAtribuicao")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'App' object has no attribute 'setObjectName'
+
+2025-04-09 21:57:29,920 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 152, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 68, in __init__
+    self.janelaAtribuicoes.setupUi(self)
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\interfaceGerada\janelaAtribuicao.py", line 16, in setupUi
+    janelaAtribuicao.setObjectName("janelaAtribuicao")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'App' object has no attribute 'setObjectName'
+
+2025-04-09 21:59:47,960 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 152, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 68, in __init__
+    self.janelaAtribuicoes.setupUi(QMainWindow)
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\interfaceGerada\janelaAtribuicao.py", line 16, in setupUi
+    janelaAtribuicao.setObjectName("janelaAtribuicao")
+TypeError: setObjectName(self, name: Optional[str]): first argument of unbound method must have type 'QObject'
+
+2025-04-09 22:00:35,886 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 151, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'App' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:01:01,211 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 151, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.janelaAtribuicoes.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Ui_janelaAtribuicao' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:01:36,717 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 149, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.janelaAtribuicoes.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Ui_janelaAtribuicao' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:01:38,244 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 149, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.janelaAtribuicoes.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Ui_janelaAtribuicao' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:02:25,550 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 149, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.janelaAtribuicoes.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Ui_janelaAtribuicao' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:02:34,395 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 149, in <module>
+    app = App()
+          ^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 75, in __init__
+    self.janelaAtribuicoes.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Ui_janelaAtribuicao' object has no attribute 'textEditCaminhoPasta'
+
+2025-04-09 22:07:33,418 - ERROR - Traceback (most recent call last):
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 147, in <module>
+    window = MainWindow()
+             ^^^^^^^^^^^^
+  File "c:\Users\aojor\Downloads\CodigosPython\vsCode\projetos\varredorVelocidades\main.py", line 59, in __init__
+    self.pushButtonSelecPasta.clicked.connect(buscarDirArquivosTxt)
+                                              ^^^^^^^^^^^^^^^^^^^^
+NameError: name 'buscarDirArquivosTxt' is not defined. Did you mean: 'self.buscarDirArquivosTxt'?
+
