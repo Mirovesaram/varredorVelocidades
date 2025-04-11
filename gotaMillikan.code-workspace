@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../gotaMillikan"
+		},
+		{
+			"path": "../pacoteComparadorPicos/comparadorPicos"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
