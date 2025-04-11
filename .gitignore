@@ -2,8 +2,8 @@
 
 *.log
 
-varredorVelocidades/paraCompilar.py
-varredorVelocidades/teste.py
-varredorVelocidades/calculadoraVelocidades.py
+/paraCompilar.py
+/teste.py
+/calculadoraVelocidades.py
 
-varredorVelocidades/scripts
+/scripts/
