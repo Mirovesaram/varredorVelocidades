@@ -2,8 +2,8 @@
 
 *.log
 
-/paraCompilar.py
-/teste.py
-/calculadoraVelocidades.py
+paraCompilar.py
+teste.py
+calculadoraVelocidades.py
 
 /scripts/
