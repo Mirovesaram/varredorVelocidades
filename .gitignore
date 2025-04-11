@@ -1,1 +1,5 @@
-gotaMillikan.code-workspace
+*.code-workspace
+
+paraCompilar.py
+teste.py
+calculadoraVelocidades.py
