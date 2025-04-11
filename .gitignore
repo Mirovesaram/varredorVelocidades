@@ -1,5 +1,9 @@
 *.code-workspace
 
-paraCompilar.py
-teste.py
-calculadoraVelocidades.py
+*.log
+
+varredorVelocidades/paraCompilar.py
+varredorVelocidades/teste.py
+varredorVelocidades/calculadoraVelocidades.py
+
+varredorVelocidades/scripts/
