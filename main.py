@@ -8,13 +8,21 @@ import traceback
 
 import pandas as pd
 
-import matplotlib
+import matplotlib.pyplot as plt
 
 import numpy as np
+
+import glob
+
+import time
+
+import math
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox
 
 from interfaceGerada.janelaAtribuicao import Ui_janelaAtribuicao
+
+from interfaceGerada.janelaExecucao import Ui_MainWindowExecucao
 
 # Tentar resolver problema dos ícones que não estão aparecendo nas janelas, solução
 # retirada de:
@@ -29,151 +37,489 @@ def resource_path(caminho_relativo):
 
     return os.path.join(caminho_base, caminho_relativo)
 
+# Configuração básica para criação do arquivo.log
+
 logging.basicConfig(
     filename=r'relatorioErros.log',
     level=logging.ERROR,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-#Método para capturar erros de forma global
+# Método para capturar erros de forma global
 def capturarExcecao(exctype,value,tb):
 
-    #Essa é a mensagem de erro com detalhes de onde o erro aconteceu no código
+    # Essa é a mensagem de erro com detalhes de onde o erro aconteceu no código
     mensagemErro="".join(traceback.format_exception(exctype,value,tb))
 
     print(mensagemErro)
 
-    #Esse é o comando para inserir o erro no arquivo .log
+    # Esse é o comando para inserir o erro no arquivo .log
     logging.error(mensagemErro)
 
 class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             
-            def __init__(self):
+    def __init__(self):
 
-                super().__init__()
+        super().__init__()
 
-                self.setupUi(self)
+        self.setupUi(self)
 
-                self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+        self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
-                # GATILHOS #
+        ############
+        ############
+        # GATILHOS #
+        ############
+        ############
 
-                self.pushButtonSelecPasta.clicked.connect(self.buscarDirArquivosTxt)
+        self.pushButtonSelecPasta.clicked.connect(self.buscarDirArquivosTxt)
 
-                self.pushButton_executar.clicked.connect(self.executarCalculos)
+        self.pushButton_executar.clicked.connect(self.extrairVariaveis)
 
-                # ATRIBUTOS #
+        #############
+        #############
+        # ATRIBUTOS #
+        #############
+        #############
 
-                # Array das arrays de velocidades de subida e descida
-                self.arrayDasArraysVelSub = []
+        # Array das arrays de velocidades de subida e descida
+        self.arrayDasArraysVelSub = []
 
-                self.arrayDasArraysVelDes = []
+        self.arrayDasArraysVelDes = []
 
-                # Array das arrays dos instantes correspondentes 
-                # a essas velocidades de subida e descida
-                self.arrayDasArraysVelSubInstantes = []
+        # Array das arrays dos instantes correspondentes 
+        # a essas velocidades de subida e descida
+        self.arrayDasArraysVelSubInstantes = []
 
-                self.arrayDasArraysVelDesInstantes = []
+        self.arrayDasArraysVelDesInstantes = []
 
-                # Array de desvios padrões amostrais das velocidades 
-                # de subida e descida
-                self.arrayDesvPadAmostVelSub = []
+        # Array de desvios padrões amostrais das velocidades 
+        # de subida e descida
+        self.arrayDesvPadAmostVelSub = []
 
-                self.arrayDesvPadAmostVelDes = []
+        self.arrayDesvPadAmostVelDes = []
 
-                #Array de médias das velocidades de subida e descida
-                self.arrayMediaVelSub = []
+        #Array de médias das velocidades de subida e descida
+        self.arrayMediaVelSub = []
 
-                self.arrayMediaVelDes = []
+        self.arrayMediaVelDes = []
 
-                # Array de desvios padrões amostrais da média de (erros) 
-                # velocidades de subida e descida
-                self.arrayDesvPadAmostMediaVelDes = []
+        # Array de desvios padrões amostrais da média de (erros) 
+        # velocidades de subida e descida
+        self.arrayDesvPadAmostMediaVelDes = []
 
-                self.arrayDesvPadAmostMediaVelSub = []
+        self.arrayDesvPadAmostMediaVelSub = []
 
-                # Array dos caminhos dos arquivos .txt
-                self.arrayCaminhosArquivos = None
+        # Array dos caminhos dos arquivos .txt
+        self.arrayCaminhosArquivos = None
 
-                # Inicialização do atributo diretório
-                self.diretorio = None
-
-                self.voltagem = None
-
-                self.densGot = None
-
-                self.distPlacs = None
-            
-            def buscarDirArquivosTxt(self):
-
-                self.diretorio = None
-                
-                diretorio=None      
-                
-                opcoes = QFileDialog.Options()
-                
-                opcoes |= QFileDialog.ShowDirsOnly
-                
-                diretorio = QFileDialog.getExistingDirectory(self,'Selecionar Pasta dos CIFs','',options=opcoes)
-                
-                if diretorio:
-                    
-                    self.textEditCaminhoPasta.setText(diretorio)
-
-                    self.diretorio = diretorio
-
-                    # Para fins de teste
-
-                    #print(self.diretorio)
-                
-                else:
-
-                    self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
-                    
-                    # Para fins de teste
-
-                    #print(self.diretorio)
-
-            def executarCalculos(self):
-                 
-                 densGot = self.doubleSpinBoxDensGot.value()
-
-                 distPlacs = self.doubleSpinBox_distPlacs.value()
-
-                 voltagem = self.doubleSpinBox_voltagem.value()
-                 
-                 if densGot != 0 and voltagem != 0 and distPlacs != 0:
-                    
-                    if self.diretorio:
-
-                        self.voltagem = voltagem
-
-                        self.densGot = densGot
-
-                        self.distPlacs = distPlacs
-
-                        # Para fins de teste
-
-                        #print(f"{voltagem}, {distPlacs}, {densGot}")
-
-                    else:
-
-                        QMessageBox.warning(self, "Erro", "Você não escolheu uma pasta.")
-                 
-                 else:
-                      
-                      QMessageBox.warning(self, "Erro", "Preencha os campos corretamente. Algum deles está nulo.")
-                      
-            
-
+        # Inicialização do atributo diretório
+        self.diretorio = None
         
-        # MÉTODOS DE ATRIBUIÇÃO
+        # Inicialização do atributo voltagem
+        self.voltagem = None
 
-        # MÉTODOS DE EXECUÇÃO
+        # Inicialização do atributo densidade da gota
+        self.densGot = None
 
-        # MÉTODOS DE EDIÇÃO
+        # Inicialização do atributo distância das placas
+        self.distPlacs = None
 
-        # MÉTODOS DE AVALIAÇÃO
+    #########################
+    #########################            
+    # MÉTODOS DE ATRIBUIÇÃO #
+    #########################
+    #########################
+
+    # Método para exibir diretórios e conseguir o caminho da pasta
+    
+    def buscarDirArquivosTxt(self):
+
+        self.diretorio = None
+        
+        diretorio=None      
+        
+        opcoes = QFileDialog.Options()
+        
+        opcoes |= QFileDialog.ShowDirsOnly
+        
+        diretorio = QFileDialog.getExistingDirectory(self,'Selecionar Pasta dos CIFs','',options=opcoes)
+        
+        if diretorio:
+            
+            self.textEditCaminhoPasta.setText(diretorio)
+
+            self.diretorio = diretorio
+
+            # Para fins de teste
+
+            #print(self.diretorio)
+        
+        else:
+
+            self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+            
+            # Para fins de teste
+
+            #print(self.diretorio)
+
+    # Método para verificar se tudo foi devidamente 
+    # preenchido e então extrair as variáveis para
+    # executar os cálculos
+
+    def extrairVariaveis(self):
+            
+        densGot = self.doubleSpinBoxDensGot.value()
+
+        distPlacs = self.doubleSpinBox_distPlacs.value()
+
+        voltagem = self.doubleSpinBox_voltagem.value()
+        
+        if densGot != 0 and voltagem != 0 and distPlacs != 0:
+        
+            if self.diretorio:
+
+                self.voltagem = voltagem
+
+                self.densGot = densGot
+
+                self.distPlacs = distPlacs
+
+                # Para fins de teste
+
+                #print(f"{voltagem}, {distPlacs}, {densGot}")
+
+            else:
+
+                QMessageBox.warning(self, "Erro", "Você não escolheu uma pasta.")
+        
+        else:
+            
+            QMessageBox.warning(self, "Erro", "Preencha os campos corretamente. Algum deles está nulo.")
+
+        #######################
+        #######################
+        # MÉTODOS DE EXECUÇÃO #
+        #######################
+        #######################
+
+        def executarCalculos(self):
+
+            extensaoArquivo = '*.txt'
+
+            buscaDosTxts = os.path.join(self.diretorio, extensaoArquivo)
+
+            arrayCaminhosTxt = glob.glob(buscaDosTxts)
+
+            # Vou fazer uma iteração global do algoritmo que é
+            # regida pelo número de arquivos txt presentes na pasta.
+            numeroDeRepeticoes = len(arrayCaminhosTxt)
+
+            # splitext é para excluir a extensão .txt do fim do nome base (basename)
+            arrayNomesTxt = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
+
+            pastaResultados = "resultados"
+
+            os.makedirs(pastaResultados, exist_ok=True)
+
+            varredura = 5
+        
+            self.arrayDasArraysVelSub = []
+
+            self.arrayDasArraysVelDes = []
+
+            self.arrayDasArraysVelSubInstantes = []
+
+            self.arrayDasArraysVelDesInstantes = []
+
+            self.arrayDesvPadAmostVelSub = []
+
+            self.arrayDesvPadAmostVelDes = []
+
+            self.arrayMediaVelSub = []
+
+            self.arrayMediaVelDes = []
+
+            self.arrayDesvPadAmostMediaVelDes = []
+
+            self.arrayDesvPadAmostMediaVelSub = []
+
+            pastaResultados = "resultados"
+
+            os.makedirs(pastaResultados, exist_ok=True)
+
+            for i in range(numeroDeRepeticoes):
+
+                time.sleep(0.5)
+                print("\nComeçando análise...\n")
+                time.sleep(0.5)
+                print(f"\nArquivo {arrayNomesTxt[i]}\n")
+
+                self.arrayDasArraysVelSub.append([])
+
+                self.arrayDasArraysVelDes.append([])
+
+                self.arrayDasArraysVelSubInstantes.append([])
+
+                self.arrayDasArraysVelDesInstantes.append([])
+
+                txtEmAnalise = arrayCaminhosTxt[i]
+
+                # O parâmetro usecols (Não tem mais) garante que as únicas colunas 
+                # utilizadas sejam as das strings entregues e o 
+                # parâmetro header coloca a segunda linha (linha 1) 
+                # como cabeçalho da tabela ignorando a primeira 
+                # linha que no nosso contexto nos atrapalha e o 
+                # parâmetro sep indica a separação entre os dados, 
+                # onde "\t" indica que ela é feita com tab 
+                # (Tabulação)
+                dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
+
+                # dropna é uma função que exclui linhas onde há dados
+                # ausentes (NaN)
+                dataFrameVelocidades = dataFrameVelocidades.dropna()
+
+                dataFrameVelocidades.index = range(len(dataFrameVelocidades))
+
+                """print(dataFrameVelocidades.dtypes)  
+                print(dataFrameVelocidades.head())"""
+
+                # Retorna o número de linhas
+                quantidadeLinhas = dataFrameVelocidades.shape[0]
+
+                for j in range(quantidadeLinhas):
+
+                    velocidade = dataFrameVelocidades.iloc[j,1]
+
+                    instante = dataFrameVelocidades.iloc[j,0]
+
+                    def atribuicaoVelocidadeDescida():
+
+                        self.arrayDasArraysVelDes[i].append(velocidade)
+
+                        self.arrayDasArraysVelDesInstantes[i].append(instante)
+
+                    def atribuicaoVelocidadeSubida():
+
+                        self.arrayDasArraysVelSub[i].append(velocidade)
+
+                        self.arrayDasArraysVelSubInstantes[i].append(instante)
+                    
+                    
+
+                    # Primeiro, vamos descobrir se o ponto analisado 
+                    # vai estar em um dos extremos ou no meio
+
+                    if velocidade == 0:
+                        
+                        Pontuacao = self.varrerDianteira()
+
+                        if Pontuacao > 0:
+
+                            atribuicaoVelocidadeSubida()
+
+                        elif Pontuacao < 0:
+
+                            atribuicaoVelocidadeDescida()
+
+                        elif Pontuacao == 0:
+
+                            pass
+
+
+                    elif velocidade != 0 and velocidade != (quantidadeLinhas-1):
+
+                        PontuacaO = self.varrerDianteira() + self.varrerTraseira()
+
+                        if PontuacaO > 0:
+
+                            atribuicaoVelocidadeSubida()
+
+                        elif PontuacaO < 0:
+
+                            atribuicaoVelocidadeDescida()
+
+                        elif PontuacaO == 0:
+
+                            pass
+
+                    elif velocidade == (quantidadeLinhas-1):
+
+                        pontuacaO = self.varrerTraseira()
+
+                        if pontuacaO > 0:
+
+                            atribuicaoVelocidadeSubida()
+
+                        elif pontuacaO < 0:
+
+                            atribuicaoVelocidadeDescida()
+
+                        elif pontuacaO == 0:
+
+                            pass
+
+                #print(f"\nGerando gráfico para {arrayNomesTxt[i]}\n")
+
+                plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
+
+                plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
+
+                plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
+
+                plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
+                plt.xlabel('Instante (s)')
+                plt.ylabel('Velocidade vertical (m/s)')
+                plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
+
+                #print("\nATENÇÃO, feche a janela do gráfico para prosseguir\n")
+
+                plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{varredura}.png"), dpi=300, bbox_inches='tight')
+
+                plt.show()
+
+                desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
+
+                desvioPadraoAmostralVelocidadeSubida = np.std(self.arrayDasArraysVelSub[i], ddof=1)
+
+                self.arrayDesvPadAmostVelSub.append(desvioPadraoAmostralVelocidadeSubida)
+
+                self.arrayDesvPadamostVelDes.append(desvioPadraoAmostralVelocidadeDescida)
+
+                self.arrayMediaVelSub.append(np.mean(self.arrayDasArraysVelSub[i]))
+
+                self.arrayMediaVelDes.append(np.mean(self.arrayDasArraysVelDes[i]))
+
+                self.arrayDesvPadAmostMediaVelDes.append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrayDasArraysVelDes[i]))))
+
+                self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
+
+                subpastaArquivos = f"{arrayNomesTxt[i]}"
+
+                caminho = os.path.join(pastaResultados,subpastaArquivos)
+
+                os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
+
+                caminho = os.path.join(pastaResultados,subpastaArquivos)
+
+                caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
+
+                caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
+
+                csv_VelSub = []
+
+                csv_VelDes = []
+
+                for velocidadeSubida in self.arrayDasArraysVelSub[i]:
+
+                    csv_VelSub.append(velocidadeSubida)
+
+                dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
+
+                dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
+
+                for velocidadeDescida in self.arrayDasArraysVelDes[i]:
+
+                    csv_VelDes.append(velocidadeDescida)
+
+                dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
+
+                dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
+
+                #print(f"\nVelocidades de cada grupo salvas para o arquivo {arrayNomesTxt[i]} em {caminho}\n")
+
+                #print(f"\nÁnalise do arquivo {arrayNomesTxt[i]} finalizada\n")
+
+            estatisticas = {
+                "nome": arrayNomesTxt,
+                "mediaVelSub": self.arrayMediaVelSub,
+                "desvPadVelSub": self.arrayDesvPadAmostVelSub,
+                "media_DesvPadVelSub_Erro": self.arrayDesvPadAmostMediaVelSub,
+                "mediaVelDes": self.arrayMediaVelDes,
+                "desvPadVelDes": self.arrayDesvPadAmostVelDes,
+                "media_DesvPadVelDes_Erro": self.arrayDesvPadAmostMediaVelDes
+            }
+
+            dataFrameEstatisticas = pd.DataFrame(estatisticas)
+
+            caminho_arquivo_estatisticas = os.path.join(pastaResultados, "estatisticas.csv")
+
+            dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
+
+            #print(f"\nEstatísticas de todos os grupos reunidas em {caminho_arquivo_estatisticas}\n")
+
+    def varredor(self, vel):
+
+        velocidade = vel
+
+        ponto = 0
+
+        if velocidade > 0:
+
+            ponto += 1
+
+        elif velocidade < 0:
+
+            ponto += -1
+
+        elif velocidade == 0:
+
+            ponto += 0
+
+        return ponto
+                    
+    def varrerDianteira(self):
+        
+        pontuacao = 0
+
+        indice = dataFrameVelocidades.index[j]
+
+        diferenca = (quantidadeLinhas-1) - indice
+
+        if diferenca <= varredura:
+
+            exclusao = varredura - diferenca
+
+            for k in range((varredura+1)-exclusao):
+
+                pontuacao += varredor(dataFrameVelocidades.iloc[(j+k),1])
+
+        else:
+
+            for k in range(varredura+1):
+
+                pontuacao += self.varredor(dataFrameVelocidades.iloc[(j+k),1])
+
+        return pontuacao
+
+
+    def varrerTraseira(self):
+
+        pontuacao = 0
+
+        indice = dataFrameVelocidades.index[j]
+
+        diferenca = varredura - indice
+
+        if abs(diferenca) <= varredura:
+
+            exclusao = varredura - diferenca
+
+            for k in range((varredura+1)-exclusao):
+
+                pontuacao += self.varredor(dataFrameVelocidades.iloc[(j-k),1])
+
+        else:
+
+            for k in range(varredura+1):
+
+                pontuacao += self.varredor(dataFrameVelocidades.iloc[(j-k),1])
+
+        return pontuacao
+
+        # MÉTODOS DE EDIÇÃO #
+
+        # MÉTODOS DE AVALIAÇÃO #
 
 
     
