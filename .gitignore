@@ -2,6 +2,8 @@
 
 *.log
 
+*.txt
+
 paraCompilar.py
 teste.py
 calculadoraVelocidades.py
