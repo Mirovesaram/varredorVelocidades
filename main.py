@@ -22,6 +22,8 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox
 
 from PyQt5.QtCore import QDir
 
+from PyQt5.QtGui import QIcon
+
 from interfaceGerada.janelaAtribuicao import Ui_janelaAtribuicao
 
 from interfaceGerada.janelaExecucao import Ui_MainWindowExecucao
@@ -50,13 +52,32 @@ logging.basicConfig(
 # Método para capturar erros de forma global
 def capturarExcecao(exctype,value,tb):
 
-    # Essa é a mensagem de erro com detalhes de onde o erro aconteceu no código
+    # Essa é a mensagem de erro com detalhes de 
+    # onde o erro aconteceu no código
     mensagemErro="".join(traceback.format_exception(exctype,value,tb))
-
-    print(mensagemErro)
 
     # Esse é o comando para inserir o erro no arquivo .log
     logging.error(mensagemErro)
+
+    # Cria-se uma caixa de erro
+    erro=QMessageBox()
+    # Coloca-se o ícone da caixa como crítico
+    erro.setIcon(QMessageBox.Critical)
+    # Insere o texto na caixa de erro
+    erro.setText("Ocorreu um erro no aplicativo")
+    # E também insere o erro que aconteceu
+    erro.setInformativeText(str(value))
+    # Esse é o título que aparecerá na caixa,
+    # No canto superior esquerdo da caixa
+    erro.setWindowTitle("Erro")
+    # Comando para adicionar um ícone ao canto superior
+    # esquerdo da janela
+    erro.setWindowIcon(QIcon(resource_path(r'icones\logoMillikan.ico')))
+    # E os detalhes do erro, como onde
+    # ocorreu nas linhas de código
+    erro.setDetailedText(mensagemErro)
+    # Comando para quando fechar a caixa, encerrar o programa
+    erro.exec_()
 
 class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             
@@ -68,6 +89,12 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
+        self.janela_atribuicao = QMainWindow()
+
+        self.janelaAtribuicao = Ui_janelaAtribuicao()
+
+        self.janelaAtribuicao.setupUi(self.janela_atribuicao)
+
         self.janela_execucao = QMainWindow()
 
         self.janelaExecucao = Ui_MainWindowExecucao()
@@ -75,6 +102,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.janelaExecucao.setupUi(self.janela_execucao)
 
         self.progressBar = self.janelaExecucao.progressBarExecucao
+
+        self.janelaExecucao.pushButtonCancelar.clicked.connect(self.cancelarOsCalculosFeitos)
 
         ############
         ############
@@ -202,7 +231,21 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 #print(f"{voltagem}, {distPlacs}, {densGot}")
 
-                self.executarCalculos()
+                arrayCaminhosTxt = []
+
+                extensaoArquivo = '*.txt'
+
+                buscaDosTxts = os.path.join(self.diretorio, extensaoArquivo)
+
+                arrayCaminhosTxt = glob.glob(buscaDosTxts)
+
+                if arrayCaminhosTxt != []:
+
+                    self.executarCalculos(arrayCaminhosTxt)
+
+                else:
+                    
+                    QMessageBox.warning(self, "Erro", "A pasta que você escolheu não tem nenhum arquivo .txt")
 
             else:
 
@@ -218,27 +261,23 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         #######################
         #######################
 
-        
-
     def atualizar_progresso(self, valor, mensagem):
 
         self.progressBar.setValue(valor)
         self.progressBar.setFormat(f"{mensagem} ({valor}%)")
         QApplication.processEvents()
 
-    def executarCalculos(self):
+    def executarCalculos(self, arrayCaminhosTxt):
+
+        self.hide()
 
         self.janela_execucao.show()
+
+        self.close()
         
         time.sleep(0.5)
         self.atualizar_progresso(0, "Iniciando processamento")
         time.sleep(0.5)
-
-        extensaoArquivo = '*.txt'
-
-        buscaDosTxts = os.path.join(self.diretorio, extensaoArquivo)
-
-        arrayCaminhosTxt = glob.glob(buscaDosTxts)
 
         # Vou fazer uma iteração global do algoritmo que é
         # regida pelo número de arquivos txt presentes na pasta.
@@ -259,7 +298,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         for i in range(numeroDeRepeticoes):
 
+            time.sleep(0.5)
             self.atualizar_progresso((20+(i+1)), "Varrendo...")
+            time.sleep(0.5)
 
             #time.sleep(0.5)
             #print("\nComeçando análise...\n")
@@ -284,7 +325,16 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             # parâmetro sep indica a separação entre os dados, 
             # onde "\t" indica que ela é feita com tab 
             # (Tabulação)
-            dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
+
+            try:
+                
+                dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
+
+            except Exception as e:
+                 
+                 self.cancelarOsCalculosFeitos()
+
+                 raise ValueError(f"O dataframe do arquivo {txtEmAnalise} apresenta problemas")
 
             # dropna é uma função que exclui linhas onde há dados
             # ausentes (NaN)
@@ -378,7 +428,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             "media_DesvPadVelDes_Erro": self.arrayDesvPadAmostMediaVelDes
         }"""
 
+        time.sleep(0.5)
         self.atualizar_progresso(100, "Completo")
+        time.sleep(0.5)
 
         #dataFrameEstatisticas = pd.DataFrame(estatisticas)
 
@@ -387,6 +439,52 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         #dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
 
         #print(f"\nEstatísticas de todos os grupos reunidas em {caminho_arquivo_estatisticas}\n")
+
+    def cancelarOsCalculosFeitos(self):
+
+        # Precisa limpar as arrays e abrir novamente 
+        # a janela principal fechando a de executar 
+        # voltando ao estado inicial
+
+        self.arrayDasArraysVelSub = []
+
+        self.arrayDasArraysVelDes = []
+
+        self.arrayDasArraysVelSubInstantes = []
+
+        self.arrayDasArraysVelDesInstantes = []
+
+        self.arrayDesvPadAmostVelSub = []
+
+        self.arrayDesvPadAmostVelDes = []
+
+        self.arrayMediaVelSub = []
+
+        self.arrayMediaVelDes = []
+
+        self.arrayDesvPadAmostMediaVelDes = []
+
+        self.arrayDesvPadAmostMediaVelSub = []
+
+        self.arrayCaminhosArquivos = None
+
+        self.diretorio = None
+        
+        self.voltagem = None
+
+        self.densGot = None
+
+        self.distPlacs = None
+
+        self.varredura = 5
+
+        self.janelaAtribuicao.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+
+        self.janela_execucao.hide()
+
+        self.janela_atribuicao.show()
+
+        self.janela_execucao.close()
 
     def classificarVelocidades(self, dataFrameVelocidades, indice_i):
 
