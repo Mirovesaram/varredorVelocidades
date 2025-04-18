@@ -20,6 +20,8 @@ import math
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox
 
+from PyQt5.QtCore import QDir
+
 from interfaceGerada.janelaAtribuicao import Ui_janelaAtribuicao
 
 from interfaceGerada.janelaExecucao import Ui_MainWindowExecucao
@@ -65,6 +67,14 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.setupUi(self)
 
         self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+
+        self.janela_execucao = QMainWindow()
+
+        self.janelaExecucao = Ui_MainWindowExecucao()
+
+        self.janelaExecucao.setupUi(self.janela_execucao)
+
+        self.progressBar = self.janelaExecucao.progressBarExecucao
 
         ############
         ############
@@ -125,6 +135,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # Inicialização do atributo distância das placas
         self.distPlacs = None
 
+        # Inicialização do atributo varredura
+        self.varredura = 5
+
     #########################
     #########################            
     # MÉTODOS DE ATRIBUIÇÃO #
@@ -143,7 +156,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         
         opcoes |= QFileDialog.ShowDirsOnly
         
-        diretorio = QFileDialog.getExistingDirectory(self,'Selecionar Pasta dos CIFs','',options=opcoes)
+        diretorio = QFileDialog.getExistingDirectory(self,'Selecionar Pasta','',options=opcoes)
         
         if diretorio:
             
@@ -189,6 +202,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 #print(f"{voltagem}, {distPlacs}, {densGot}")
 
+                self.executarCalculos()
+
             else:
 
                 QMessageBox.warning(self, "Erro", "Você não escolheu uma pasta.")
@@ -203,250 +218,253 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         #######################
         #######################
 
-        def executarCalculos(self):
-
-            extensaoArquivo = '*.txt'
-
-            buscaDosTxts = os.path.join(self.diretorio, extensaoArquivo)
-
-            arrayCaminhosTxt = glob.glob(buscaDosTxts)
-
-            # Vou fazer uma iteração global do algoritmo que é
-            # regida pelo número de arquivos txt presentes na pasta.
-            numeroDeRepeticoes = len(arrayCaminhosTxt)
-
-            # splitext é para excluir a extensão .txt do fim do nome base (basename)
-            arrayNomesTxt = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
-
-            pastaResultados = "resultados"
-
-            os.makedirs(pastaResultados, exist_ok=True)
-
-            varredura = 5
         
-            self.arrayDasArraysVelSub = []
 
-            self.arrayDasArraysVelDes = []
+    def atualizar_progresso(self, valor, mensagem):
 
-            self.arrayDasArraysVelSubInstantes = []
+        self.progressBar.setValue(valor)
+        self.progressBar.setFormat(f"{mensagem} ({valor}%)")
+        QApplication.processEvents()
 
-            self.arrayDasArraysVelDesInstantes = []
+    def executarCalculos(self):
 
-            self.arrayDesvPadAmostVelSub = []
+        self.janela_execucao.show()
+        
+        time.sleep(0.5)
+        self.atualizar_progresso(0, "Iniciando processamento")
+        time.sleep(0.5)
 
-            self.arrayDesvPadAmostVelDes = []
+        extensaoArquivo = '*.txt'
 
-            self.arrayMediaVelSub = []
+        buscaDosTxts = os.path.join(self.diretorio, extensaoArquivo)
 
-            self.arrayMediaVelDes = []
+        arrayCaminhosTxt = glob.glob(buscaDosTxts)
 
-            self.arrayDesvPadAmostMediaVelDes = []
+        # Vou fazer uma iteração global do algoritmo que é
+        # regida pelo número de arquivos txt presentes na pasta.
+        numeroDeRepeticoes = len(arrayCaminhosTxt)
 
-            self.arrayDesvPadAmostMediaVelSub = []
+        # splitext é para excluir a extensão .txt do fim do nome base (basename)
+        arrayNomesTxt = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
 
-            pastaResultados = "resultados"
+        pastaResultados = "resultados"
 
-            os.makedirs(pastaResultados, exist_ok=True)
+        os.makedirs(pastaResultados, exist_ok=True)
 
-            for i in range(numeroDeRepeticoes):
+        time.sleep(0.5)
+        self.atualizar_progresso(10, "Iniciando Varredura")
+        time.sleep(0.5)
 
-                time.sleep(0.5)
-                print("\nComeçando análise...\n")
-                time.sleep(0.5)
-                print(f"\nArquivo {arrayNomesTxt[i]}\n")
+        self.varredura = 5
 
-                self.arrayDasArraysVelSub.append([])
+        for i in range(numeroDeRepeticoes):
 
-                self.arrayDasArraysVelDes.append([])
+            self.atualizar_progresso((20+(i+1)), "Varrendo...")
 
-                self.arrayDasArraysVelSubInstantes.append([])
+            #time.sleep(0.5)
+            #print("\nComeçando análise...\n")
+            #time.sleep(0.5)
+            #print(f"\nArquivo {arrayNomesTxt[i]}\n")
 
-                self.arrayDasArraysVelDesInstantes.append([])
+            self.arrayDasArraysVelSub.append([])
 
-                txtEmAnalise = arrayCaminhosTxt[i]
+            self.arrayDasArraysVelDes.append([])
 
-                # O parâmetro usecols (Não tem mais) garante que as únicas colunas 
-                # utilizadas sejam as das strings entregues e o 
-                # parâmetro header coloca a segunda linha (linha 1) 
-                # como cabeçalho da tabela ignorando a primeira 
-                # linha que no nosso contexto nos atrapalha e o 
-                # parâmetro sep indica a separação entre os dados, 
-                # onde "\t" indica que ela é feita com tab 
-                # (Tabulação)
-                dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
+            self.arrayDasArraysVelSubInstantes.append([])
 
-                # dropna é uma função que exclui linhas onde há dados
-                # ausentes (NaN)
-                dataFrameVelocidades = dataFrameVelocidades.dropna()
+            self.arrayDasArraysVelDesInstantes.append([])
 
-                dataFrameVelocidades.index = range(len(dataFrameVelocidades))
+            txtEmAnalise = arrayCaminhosTxt[i]
 
-                """print(dataFrameVelocidades.dtypes)  
-                print(dataFrameVelocidades.head())"""
+            # O parâmetro usecols (Não tem mais) garante que as únicas colunas 
+            # utilizadas sejam as das strings entregues e o 
+            # parâmetro header coloca a segunda linha (linha 1) 
+            # como cabeçalho da tabela ignorando a primeira 
+            # linha que no nosso contexto nos atrapalha e o 
+            # parâmetro sep indica a separação entre os dados, 
+            # onde "\t" indica que ela é feita com tab 
+            # (Tabulação)
+            dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
 
-                # Retorna o número de linhas
-                quantidadeLinhas = dataFrameVelocidades.shape[0]
+            # dropna é uma função que exclui linhas onde há dados
+            # ausentes (NaN)
+            dataFrameVelocidades = dataFrameVelocidades.dropna()
 
-                for j in range(quantidadeLinhas):
+            #dataFrameVelocidades.index = range(len(dataFrameVelocidades))
 
-                    velocidade = dataFrameVelocidades.iloc[j,1]
+            #print(dataFrameVelocidades.dtypes)  
+            #print(dataFrameVelocidades.head())
 
-                    instante = dataFrameVelocidades.iloc[j,0]
+            self.classificarVelocidades(dataFrameVelocidades, i)
 
-                    def atribuicaoVelocidadeDescida():
+            #print(f"\nGerando gráfico para {arrayNomesTxt[i]}\n")
 
-                        self.arrayDasArraysVelDes[i].append(velocidade)
+            """plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
 
-                        self.arrayDasArraysVelDesInstantes[i].append(instante)
+            plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
 
-                    def atribuicaoVelocidadeSubida():
+            plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
 
-                        self.arrayDasArraysVelSub[i].append(velocidade)
+            plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
+            plt.xlabel('Instante (s)')
+            plt.ylabel('Velocidade vertical (m/s)')
+            plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
 
-                        self.arrayDasArraysVelSubInstantes[i].append(instante)
-                    
-                    
+            #print("\nATENÇÃO, feche a janela do gráfico para prosseguir\n")
 
-                    # Primeiro, vamos descobrir se o ponto analisado 
-                    # vai estar em um dos extremos ou no meio
+            plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{self.varredura}.png"), dpi=300, bbox_inches='tight')
 
-                    if velocidade == 0:
-                        
-                        Pontuacao = self.varrerDianteira()
+            plt.show()"""
 
-                        if Pontuacao > 0:
+            desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
 
-                            atribuicaoVelocidadeSubida()
+            desvioPadraoAmostralVelocidadeSubida = np.std(self.arrayDasArraysVelSub[i], ddof=1)
 
-                        elif Pontuacao < 0:
+            self.arrayDesvPadAmostVelSub.append(desvioPadraoAmostralVelocidadeSubida)
 
-                            atribuicaoVelocidadeDescida()
+            self.arrayDesvPadAmostVelDes.append(desvioPadraoAmostralVelocidadeDescida)
 
-                        elif Pontuacao == 0:
+            self.arrayMediaVelSub.append(np.mean(self.arrayDasArraysVelSub[i]))
 
-                            pass
+            self.arrayMediaVelDes.append(np.mean(self.arrayDasArraysVelDes[i]))
 
+            self.arrayDesvPadAmostMediaVelDes.append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrayDasArraysVelDes[i]))))
 
-                    elif velocidade != 0 and velocidade != (quantidadeLinhas-1):
+            self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
 
-                        PontuacaO = self.varrerDianteira() + self.varrerTraseira()
+            #subpastaArquivos = f"{arrayNomesTxt[i]}"
 
-                        if PontuacaO > 0:
+            #caminho = os.path.join(pastaResultados,subpastaArquivos)
 
-                            atribuicaoVelocidadeSubida()
+            #os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
 
-                        elif PontuacaO < 0:
+            #caminho = os.path.join(pastaResultados,subpastaArquivos)
 
-                            atribuicaoVelocidadeDescida()
+            #caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
 
-                        elif PontuacaO == 0:
+            #caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
 
-                            pass
+            #csv_VelSub = []
 
-                    elif velocidade == (quantidadeLinhas-1):
+            #csv_VelDes = []
 
-                        pontuacaO = self.varrerTraseira()
+            """for velocidadeSubida in self.arrayDasArraysVelSub[i]:
 
-                        if pontuacaO > 0:
+                csv_VelSub.append(velocidadeSubida)"""
 
-                            atribuicaoVelocidadeSubida()
+            #dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
 
-                        elif pontuacaO < 0:
+            #dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
 
-                            atribuicaoVelocidadeDescida()
+            """for velocidadeDescida in self.arrayDasArraysVelDes[i]:
 
-                        elif pontuacaO == 0:
+                csv_VelDes.append(velocidadeDescida)"""
 
-                            pass
+            #dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
 
-                #print(f"\nGerando gráfico para {arrayNomesTxt[i]}\n")
+            #dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
 
-                plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
+            #print(f"\nVelocidades de cada grupo salvas para o arquivo {arrayNomesTxt[i]} em {caminho}\n")
 
-                plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
+            #print(f"\nÁnalise do arquivo {arrayNomesTxt[i]} finalizada\n")
 
-                plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
+        """estatisticas = {
+            "nome": arrayNomesTxt,
+            "mediaVelSub": self.arrayMediaVelSub,
+            "desvPadVelSub": self.arrayDesvPadAmostVelSub,
+            "media_DesvPadVelSub_Erro": self.arrayDesvPadAmostMediaVelSub,
+            "mediaVelDes": self.arrayMediaVelDes,
+            "desvPadVelDes": self.arrayDesvPadAmostVelDes,
+            "media_DesvPadVelDes_Erro": self.arrayDesvPadAmostMediaVelDes
+        }"""
 
-                plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
-                plt.xlabel('Instante (s)')
-                plt.ylabel('Velocidade vertical (m/s)')
-                plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
+        self.atualizar_progresso(100, "Completo")
 
-                #print("\nATENÇÃO, feche a janela do gráfico para prosseguir\n")
+        #dataFrameEstatisticas = pd.DataFrame(estatisticas)
 
-                plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{varredura}.png"), dpi=300, bbox_inches='tight')
+        #caminho_arquivo_estatisticas = os.path.join(pastaResultados, "estatisticas.csv")
 
-                plt.show()
+        #dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
 
-                desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
+        #print(f"\nEstatísticas de todos os grupos reunidas em {caminho_arquivo_estatisticas}\n")
 
-                desvioPadraoAmostralVelocidadeSubida = np.std(self.arrayDasArraysVelSub[i], ddof=1)
+    def classificarVelocidades(self, dataFrameVelocidades, indice_i):
 
-                self.arrayDesvPadAmostVelSub.append(desvioPadraoAmostralVelocidadeSubida)
+        i = indice_i
 
-                self.arrayDesvPadamostVelDes.append(desvioPadraoAmostralVelocidadeDescida)
+        # Retorna o número de linhas
 
-                self.arrayMediaVelSub.append(np.mean(self.arrayDasArraysVelSub[i]))
+        quantidadeLinhas = dataFrameVelocidades.shape[0]
 
-                self.arrayMediaVelDes.append(np.mean(self.arrayDasArraysVelDes[i]))
+        def atribuicaoVelocidadeDescida():
 
-                self.arrayDesvPadAmostMediaVelDes.append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrayDasArraysVelDes[i]))))
+                self.arrayDasArraysVelDes[i].append(velocidade)
 
-                self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
+                self.arrayDasArraysVelDesInstantes[i].append(instante)
 
-                subpastaArquivos = f"{arrayNomesTxt[i]}"
+        def atribuicaoVelocidadeSubida():
 
-                caminho = os.path.join(pastaResultados,subpastaArquivos)
+            self.arrayDasArraysVelSub[i].append(velocidade)
 
-                os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
+            self.arrayDasArraysVelSubInstantes[i].append(instante)
 
-                caminho = os.path.join(pastaResultados,subpastaArquivos)
 
-                caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
+        for j in range(quantidadeLinhas):
 
-                caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
+            velocidade = dataFrameVelocidades.iloc[j,1]
 
-                csv_VelSub = []
+            instante = dataFrameVelocidades.iloc[j,0]
 
-                csv_VelDes = []
+            # Primeiro, vamos descobrir se o ponto analisado 
+            # vai estar em um dos extremos ou no meio
 
-                for velocidadeSubida in self.arrayDasArraysVelSub[i]:
+            if velocidade == 0:
+                
+                Pontuacao = self.varrerDianteira(dataFrameVelocidades, quantidadeLinhas, j)
 
-                    csv_VelSub.append(velocidadeSubida)
+                if Pontuacao > 0:
 
-                dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
+                    atribuicaoVelocidadeSubida()
 
-                dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
+                elif Pontuacao < 0:
 
-                for velocidadeDescida in self.arrayDasArraysVelDes[i]:
+                    atribuicaoVelocidadeDescida()
 
-                    csv_VelDes.append(velocidadeDescida)
+                elif Pontuacao == 0:
 
-                dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
+                    pass
 
-                dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
+            elif velocidade != 0 and velocidade != (quantidadeLinhas-1):
 
-                #print(f"\nVelocidades de cada grupo salvas para o arquivo {arrayNomesTxt[i]} em {caminho}\n")
+                PontuacaO = self.varrerDianteira(dataFrameVelocidades, quantidadeLinhas, j) + self.varrerTraseira(dataFrameVelocidades, j)
 
-                #print(f"\nÁnalise do arquivo {arrayNomesTxt[i]} finalizada\n")
+                if PontuacaO > 0:
 
-            estatisticas = {
-                "nome": arrayNomesTxt,
-                "mediaVelSub": self.arrayMediaVelSub,
-                "desvPadVelSub": self.arrayDesvPadAmostVelSub,
-                "media_DesvPadVelSub_Erro": self.arrayDesvPadAmostMediaVelSub,
-                "mediaVelDes": self.arrayMediaVelDes,
-                "desvPadVelDes": self.arrayDesvPadAmostVelDes,
-                "media_DesvPadVelDes_Erro": self.arrayDesvPadAmostMediaVelDes
-            }
+                    atribuicaoVelocidadeSubida()
 
-            dataFrameEstatisticas = pd.DataFrame(estatisticas)
+                elif PontuacaO < 0:
 
-            caminho_arquivo_estatisticas = os.path.join(pastaResultados, "estatisticas.csv")
+                    atribuicaoVelocidadeDescida()
 
-            dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
+                elif PontuacaO == 0:
 
-            #print(f"\nEstatísticas de todos os grupos reunidas em {caminho_arquivo_estatisticas}\n")
+                    pass
+
+            elif velocidade == (quantidadeLinhas-1):
+
+                pontuacaO = self.varrerTraseira(dataFrameVelocidades, j)
+
+                if pontuacaO > 0:
+
+                    atribuicaoVelocidadeSubida()
+
+                elif pontuacaO < 0:
+
+                    atribuicaoVelocidadeDescida()
+
+                elif pontuacaO == 0:
+
+                    pass
 
     def varredor(self, vel):
 
@@ -468,50 +486,54 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         return ponto
                     
-    def varrerDianteira(self):
+    def varrerDianteira(self, dataFrameVelocidades, quantidadeLinhas, indice_j):
         
         pontuacao = 0
+
+        j = indice_j
 
         indice = dataFrameVelocidades.index[j]
 
         diferenca = (quantidadeLinhas-1) - indice
 
-        if diferenca <= varredura:
+        if diferenca <= self.varredura:
 
-            exclusao = varredura - diferenca
+            exclusao = self.varredura - diferenca
 
-            for k in range((varredura+1)-exclusao):
+            for k in range((self.varredura+1)-exclusao):
 
-                pontuacao += varredor(dataFrameVelocidades.iloc[(j+k),1])
+                pontuacao += self.varredor(dataFrameVelocidades.iloc[(j+k),1])
 
         else:
 
-            for k in range(varredura+1):
+            for k in range(self.varredura+1):
 
                 pontuacao += self.varredor(dataFrameVelocidades.iloc[(j+k),1])
 
         return pontuacao
 
 
-    def varrerTraseira(self):
+    def varrerTraseira(self, dataFrameVelocidades, indice_j):
+
+        j = indice_j
 
         pontuacao = 0
 
         indice = dataFrameVelocidades.index[j]
 
-        diferenca = varredura - indice
+        diferenca = self.varredura - indice
 
-        if abs(diferenca) <= varredura:
+        if abs(diferenca) <= self.varredura:
 
-            exclusao = varredura - diferenca
+            exclusao = self.varredura - diferenca
 
-            for k in range((varredura+1)-exclusao):
+            for k in range((self.varredura+1)-exclusao):
 
                 pontuacao += self.varredor(dataFrameVelocidades.iloc[(j-k),1])
 
         else:
 
-            for k in range(varredura+1):
+            for k in range(self.varredura+1):
 
                 pontuacao += self.varredor(dataFrameVelocidades.iloc[(j-k),1])
 
