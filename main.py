@@ -32,7 +32,9 @@ from interfaceGerada.janelaExecucao import Ui_MainWindowExecucao
 # retirada de:
 # https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
 def resource_path(caminho_relativo):
+
     try:
+
         caminho_base = sys._MEIPASS
 
     except Exception:
@@ -255,15 +257,16 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             
             QMessageBox.warning(self, "Erro", "Preencha os campos corretamente. Algum deles está nulo.")
 
-        #######################
-        #######################
-        # MÉTODOS DE EXECUÇÃO #
-        #######################
-        #######################
+    #######################
+    #######################
+    # MÉTODOS DE EXECUÇÃO #
+    #######################
+    #######################
 
     def atualizar_progresso(self, valor, mensagem):
 
         self.progressBar.setValue(valor)
+
         self.progressBar.setFormat(f"{mensagem} ({valor}%)")
         QApplication.processEvents()
 
@@ -276,7 +279,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.close()
         
         time.sleep(0.5)
+        
         self.atualizar_progresso(0, "Iniciando processamento")
+        
         time.sleep(0.5)
 
         # Vou fazer uma iteração global do algoritmo que é
@@ -291,7 +296,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         os.makedirs(pastaResultados, exist_ok=True)
 
         time.sleep(0.5)
+        
         self.atualizar_progresso(10, "Iniciando Varredura")
+        
         time.sleep(0.5)
 
         self.varredura = 5
@@ -299,13 +306,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         for i in range(numeroDeRepeticoes):
 
             time.sleep(0.5)
-            self.atualizar_progresso((20+(i+1)), "Varrendo...")
-            time.sleep(0.5)
 
-            #time.sleep(0.5)
-            #print("\nComeçando análise...\n")
-            #time.sleep(0.5)
-            #print(f"\nArquivo {arrayNomesTxt[i]}\n")
+            self.atualizar_progresso((20+(i+1)), "Varrendo...")
+            
+            time.sleep(0.5)
 
             self.arrayDasArraysVelSub.append([])
 
@@ -340,31 +344,14 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             # ausentes (NaN)
             dataFrameVelocidades = dataFrameVelocidades.dropna()
 
-            #dataFrameVelocidades.index = range(len(dataFrameVelocidades))
+            # Para fins de teste
 
             #print(dataFrameVelocidades.dtypes)  
             #print(dataFrameVelocidades.head())
 
             self.classificarVelocidades(dataFrameVelocidades, i)
 
-            #print(f"\nGerando gráfico para {arrayNomesTxt[i]}\n")
-
-            """plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
-
-            plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
-
-            plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
-
-            plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
-            plt.xlabel('Instante (s)')
-            plt.ylabel('Velocidade vertical (m/s)')
-            plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
-
-            #print("\nATENÇÃO, feche a janela do gráfico para prosseguir\n")
-
-            plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{self.varredura}.png"), dpi=300, bbox_inches='tight')
-
-            plt.show()"""
+            
 
             desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
 
@@ -382,41 +369,67 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
 
-            #subpastaArquivos = f"{arrayNomesTxt[i]}"
+        time.sleep(0.5)
+        
+        self.atualizar_progresso(100, "Completo")
+        
+        time.sleep(0.5)
 
-            #caminho = os.path.join(pastaResultados,subpastaArquivos)
+        ####################################
+        ####################################
+        ####################################
+        # Recursos que muito provavelmente # 
+        # serão utilizados no futuro #######
+        ####################################
+        ####################################
+        ####################################
 
-            #os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
+        """plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
 
-            #caminho = os.path.join(pastaResultados,subpastaArquivos)
+            plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
 
-            #caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
+            plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
 
-            #caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
+            plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
+            plt.xlabel('Instante (s)')
+            plt.ylabel('Velocidade vertical (m/s)')
+            plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
 
-            #csv_VelSub = []
+            plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{self.varredura}.png"), dpi=300, bbox_inches='tight')
 
-            #csv_VelDes = []
+            plt.show()"""
+        
+        #subpastaArquivos = f"{arrayNomesTxt[i]}"
 
-            """for velocidadeSubida in self.arrayDasArraysVelSub[i]:
+        #caminho = os.path.join(pastaResultados,subpastaArquivos)
 
-                csv_VelSub.append(velocidadeSubida)"""
+        #os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
 
-            #dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
+        #caminho = os.path.join(pastaResultados,subpastaArquivos)
 
-            #dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
+        #caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
 
-            """for velocidadeDescida in self.arrayDasArraysVelDes[i]:
+        #caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
 
-                csv_VelDes.append(velocidadeDescida)"""
+        #csv_VelSub = []
 
-            #dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
+        #csv_VelDes = []
 
-            #dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
+        """for velocidadeSubida in self.arrayDasArraysVelSub[i]:
 
-            #print(f"\nVelocidades de cada grupo salvas para o arquivo {arrayNomesTxt[i]} em {caminho}\n")
+            csv_VelSub.append(velocidadeSubida)"""
 
-            #print(f"\nÁnalise do arquivo {arrayNomesTxt[i]} finalizada\n")
+        #dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
+
+        #dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
+
+        """for velocidadeDescida in self.arrayDasArraysVelDes[i]:
+
+            csv_VelDes.append(velocidadeDescida)"""
+
+        #dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
+
+        #dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
 
         """estatisticas = {
             "nome": arrayNomesTxt,
@@ -428,17 +441,11 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             "media_DesvPadVelDes_Erro": self.arrayDesvPadAmostMediaVelDes
         }"""
 
-        time.sleep(0.5)
-        self.atualizar_progresso(100, "Completo")
-        time.sleep(0.5)
-
         #dataFrameEstatisticas = pd.DataFrame(estatisticas)
 
         #caminho_arquivo_estatisticas = os.path.join(pastaResultados, "estatisticas.csv")
 
         #dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
-
-        #print(f"\nEstatísticas de todos os grupos reunidas em {caminho_arquivo_estatisticas}\n")
 
     def cancelarOsCalculosFeitos(self):
 

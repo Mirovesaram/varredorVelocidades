@@ -11,34 +11,55 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_janelaAvaliacao(object):
-    def setupUi(self, janelaAvaliacao):
-        janelaAvaliacao.setObjectName("janelaAvaliacao")
-        janelaAvaliacao.resize(800, 600)
-        self.centralwidget = QtWidgets.QWidget(janelaAvaliacao)
+class Ui_MainWindowAvaliacao(object):
+    def setupUi(self, MainWindowAvaliacao):
+        MainWindowAvaliacao.setObjectName("MainWindowAvaliacao")
+        MainWindowAvaliacao.resize(1000, 1000)
+        MainWindowAvaliacao.setMinimumSize(QtCore.QSize(1000, 1000))
+        self.centralwidget = QtWidgets.QWidget(MainWindowAvaliacao)
         self.centralwidget.setObjectName("centralwidget")
-        janelaAvaliacao.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(janelaAvaliacao)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.frameTabela = QtWidgets.QFrame(self.centralwidget)
+        self.frameTabela.setMinimumSize(QtCore.QSize(800, 250))
+        self.frameTabela.setMaximumSize(QtCore.QSize(16777215, 250))
+        self.frameTabela.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frameTabela.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frameTabela.setObjectName("frameTabela")
+        self.verticalLayout.addWidget(self.frameTabela)
+        self.frame_grafico = QtWidgets.QFrame(self.centralwidget)
+        self.frame_grafico.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_grafico.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_grafico.setObjectName("frame_grafico")
+        self.verticalLayout.addWidget(self.frame_grafico)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+        MainWindowAvaliacao.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindowAvaliacao)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 26))
         self.menubar.setObjectName("menubar")
-        janelaAvaliacao.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(janelaAvaliacao)
+        MainWindowAvaliacao.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindowAvaliacao)
         self.statusbar.setObjectName("statusbar")
-        janelaAvaliacao.setStatusBar(self.statusbar)
+        MainWindowAvaliacao.setStatusBar(self.statusbar)
 
-        self.retranslateUi(janelaAvaliacao)
-        QtCore.QMetaObject.connectSlotsByName(janelaAvaliacao)
+        self.retranslateUi(MainWindowAvaliacao)
+        QtCore.QMetaObject.connectSlotsByName(MainWindowAvaliacao)
 
-    def retranslateUi(self, janelaAvaliacao):
+    def retranslateUi(self, MainWindowAvaliacao):
         _translate = QtCore.QCoreApplication.translate
-        janelaAvaliacao.setWindowTitle(_translate("janelaAvaliacao", "MainWindow"))
+        MainWindowAvaliacao.setWindowTitle(_translate("MainWindowAvaliacao", "MainWindow"))
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    janelaAvaliacao = QtWidgets.QMainWindow()
-    ui = Ui_janelaAvaliacao()
-    ui.setupUi(janelaAvaliacao)
-    janelaAvaliacao.show()
+    MainWindowAvaliacao = QtWidgets.QMainWindow()
+    ui = Ui_MainWindowAvaliacao()
+    ui.setupUi(MainWindowAvaliacao)
+    MainWindowAvaliacao.show()
     sys.exit(app.exec_())
