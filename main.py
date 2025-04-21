@@ -169,6 +169,22 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # Inicialização do atributo varredura
         self.varredura = 5
 
+        # Inicialização da constante 1
+        self.constante1 = None
+
+        # Inicialização da constante 2
+        self.constante2 = None
+
+        # Valor da viscosidade do ar utilizado 
+        # no manual da Phywe [kg*(m*s)^-1]
+        self.viscosidadeAr = 1.82 * 10**(-5)
+
+        # Valor da gravidade [m*s^-2]
+        self.gravidade = 9.80665
+
+        # Densidade do ar [Kg*m^-3]
+        self.densidadeAr_p2 = 1.293
+
     #########################
     #########################            
     # MÉTODOS DE ATRIBUIÇÃO #
@@ -301,13 +317,23 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         
         time.sleep(0.5)
 
+        self.constante1 = (9/2)*(math.pi)*(self.distPlacs)*math.sqrt((self.viscosidadeAr**3)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
+
+        self.constante2 = (3/2)*math.sqrt((self.viscosidadeAr)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
+
+        time.sleep(0.5)
+        
+        self.atualizar_progresso(15, "Iniciando Varredura")
+        
+        time.sleep(0.5)
+
         self.varredura = 5
 
         for i in range(numeroDeRepeticoes):
 
             time.sleep(0.5)
 
-            self.atualizar_progresso((20+(i+1)), "Varrendo...")
+            self.atualizar_progresso((20+((i+1)/10)), "Varrendo...")
             
             time.sleep(0.5)
 
@@ -351,8 +377,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.classificarVelocidades(dataFrameVelocidades, i)
 
-            
-
             desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
 
             desvioPadraoAmostralVelocidadeSubida = np.std(self.arrayDasArraysVelSub[i], ddof=1)
@@ -368,6 +392,16 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             self.arrayDesvPadAmostMediaVelDes.append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrayDasArraysVelDes[i]))))
 
             self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
+
+        time.sleep(0.5)
+
+        self.atualizar_progresso(50, "")
+
+        time.sleep(0.5)
+        
+        
+
+
 
         time.sleep(0.5)
         
@@ -484,6 +518,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.distPlacs = None
 
         self.varredura = 5
+
+        self.constante1 = None
+
+        self.constante2 = None
 
         self.janelaAtribuicao.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
