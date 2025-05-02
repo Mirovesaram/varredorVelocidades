@@ -89,6 +89,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.setupUi(self)
 
+        self.setWindowIcon(QIcon(resource_path(r"icones\logoMillikan.ico")))
+
         self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
         self.janela_atribuicao = QMainWindow()
@@ -150,6 +152,25 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.arrayDesvPadAmostMediaVelDes = []
 
         self.arrayDesvPadAmostMediaVelSub = []
+
+        # Array para velocidades desconsideradas
+        # que vão ser avaliadas pelo usuário
+        self.arrayVelDesconsdrds = []
+
+        # Arrays das cargas, raios (E seus erros) 
+        # das gotas (E por fim, os erros relativos)
+
+        self.arrayCargas = []
+
+        self.arrayErrCargas = []
+
+        self.arrayPorctErrCargas = []
+
+        self.arrayRaios = []
+
+        self.arrayErrRaios = []
+
+        self.arrayPorctErrRaios = []
 
         # Array dos caminhos dos arquivos .txt
         self.arrayCaminhosArquivos = None
@@ -279,21 +300,40 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     #######################
     #######################
 
+    # Método de atualização da barra de progresso
+
     def atualizar_progresso(self, valor, mensagem):
 
+        # Altera o valor de porcentagem da barra
         self.progressBar.setValue(valor)
 
+        # Altera o texto que acompanha
         self.progressBar.setFormat(f"{mensagem} ({valor}%)")
+
+        # Comando para atualização da UI em tempo real, 
+        # sem ser feito somente ao fim
         QApplication.processEvents()
 
+    # O objetivo desse método é estabelecer os conjuntos iniciais,
+    # ele só será para estabelecimento inicial dos resultados e outros
+    # métodos se encarregarão de editar esses dados inicialmente 
+    # estabelecidos aqui
     def executarCalculos(self, arrayCaminhosTxt):
 
-        self.hide()
+        # Processo para transicionar entre janelas
 
+        # Esconde a anterior
+        self.hide()
+        
+        # Mostra a próxima
         self.janela_execucao.show()
 
+        self.janela_execucao.setWindowIcon(QIcon(resource_path(r"icones\logoMillikan.ico")))
+
+        # Fecha a anterior
         self.close()
         
+        # Delays de 1s propositais
         time.sleep(0.5)
         
         self.atualizar_progresso(0, "Iniciando processamento")
@@ -307,16 +347,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # splitext é para excluir a extensão .txt do fim do nome base (basename)
         arrayNomesTxt = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
 
-        pastaResultados = "resultados"
-
-        os.makedirs(pastaResultados, exist_ok=True)
-
         time.sleep(0.5)
         
         self.atualizar_progresso(10, "Iniciando Varredura")
         
         time.sleep(0.5)
 
+        # Configuração das constantes
         self.constante1 = (9/2)*(math.pi)*(self.distPlacs)*math.sqrt((self.viscosidadeAr**3)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
 
         self.constante2 = (3/2)*math.sqrt((self.viscosidadeAr)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
@@ -327,15 +364,12 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         
         time.sleep(0.5)
 
+        # Definição padrão do alcance de varredura
         self.varredura = 5
 
         for i in range(numeroDeRepeticoes):
 
-            time.sleep(0.5)
-
-            self.atualizar_progresso((20+((i+1)/10)), "Varrendo...")
-            
-            time.sleep(0.5)
+            # Estabelecimento das arrays
 
             self.arrayDasArraysVelSub.append([])
 
@@ -347,21 +381,26 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             txtEmAnalise = arrayCaminhosTxt[i]
 
-            # O parâmetro usecols (Não tem mais) garante que as únicas colunas 
-            # utilizadas sejam as das strings entregues e o 
-            # parâmetro header coloca a segunda linha (linha 1) 
-            # como cabeçalho da tabela ignorando a primeira 
-            # linha que no nosso contexto nos atrapalha e o 
-            # parâmetro sep indica a separação entre os dados, 
-            # onde "\t" indica que ela é feita com tab 
-            # (Tabulação)
-
+            # Isso é feito para garantir que caso 
+            # ocorra um erro por causa da estrutura 
+            # do dataframe, o usuário seja informado 
+            # mais facilmente
             try:
                 
+                # O parâmetro usecols (Não tem mais) garante que as únicas colunas 
+                # utilizadas sejam as das strings entregues e o 
+                # parâmetro header coloca a segunda linha (linha 1) 
+                # como cabeçalho da tabela ignorando a primeira 
+                # linha que no nosso contexto nos atrapalha e o 
+                # parâmetro sep indica a separação entre os dados, 
+                # onde "\t" indica que ela é feita com tab 
+                # (Tabulação)
                 dataFrameVelocidades = pd.read_csv(txtEmAnalise, sep="\t", header=1, names=['t','vy'])
 
             except Exception as e:
                  
+                 # Caso um erro seja encontrado, excluir tudo
+                 # e "inicializar" novamente
                  self.cancelarOsCalculosFeitos()
 
                  raise ValueError(f"O dataframe do arquivo {txtEmAnalise} apresenta problemas")
@@ -376,6 +415,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             #print(dataFrameVelocidades.head())
 
             self.classificarVelocidades(dataFrameVelocidades, i)
+
+            # Configuração inicial dos resultados 
+            # para os conjuntos de velocidade, suas médias, 
+            # seus desvios padrão amostrais e seus erros
 
             desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
 
@@ -395,13 +438,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(50, "")
+        self.atualizar_progresso(50, "Calculando os valores de carga e raio das gotas e seus erros")
 
         time.sleep(0.5)
         
-        
+        for i in range(numeroDeRepeticoes):
 
-
+            self.calcularCargaRaioGota(i)
 
         time.sleep(0.5)
         
@@ -481,6 +524,72 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         #dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
 
+    def calcularCargaRaioGota(self, indice_i):
+
+        i = indice_i
+
+        velDes = self.arrayMediaVelDes[i]
+
+        velSub = self.arrayMediaVelSub[i]
+
+        constante1 = self.constante1
+
+        constante2 = self.constante2
+
+        voltagem = self.voltagem
+        
+        soma = abs(velDes) + abs(velSub)
+
+        diferenca = abs(velDes) - abs(velSub)
+
+        desvPadAmostMediaVelDes = self.arrayDesvPadAmostMediaVelDes[i]
+
+        desvPadAmostMediaVelSub = self.arrayDesvPadAmostMediaVelSub[i]
+
+        # Por vezes, aparentemente há gravações que são 
+        # feitas além da distância focal
+        # da lente, quando isso ocorre a imagem é invertida
+        # e o que parece uma gota subindo na verdade é ela caindo.
+        # Quem vai atestar bem isso é o fato da velocidade de subida
+        # ser maior que a de descida e nesse caso a difença acima irá
+        # ser negativa, para corrigir erros de raiz quadrada negativa
+        # o melhor é simplesmente inverter a posição dos termos em
+        # caso de diferença negativa
+
+        if diferenca < 0:
+
+            diferenca = abs(velSub) - abs(velDes)
+
+        razao = (constante1)/(2*voltagem)
+
+        primeiraParte = 2*razao*math.sqrt(diferenca)
+
+        segundaParte = (soma*razao)/(math.sqrt(diferenca))
+
+        carga = 2*razao*soma*math.sqrt(diferenca)
+
+        erroCarga = (abs(primeiraParte+segundaParte)*desvPadAmostMediaVelDes)+(abs(primeiraParte-segundaParte)*desvPadAmostMediaVelSub)
+
+        raio = constante2*math.sqrt(diferenca)
+
+        parteAbs = (constante2)/(2*math.sqrt(diferenca))
+
+        erroRaio = (abs(parteAbs)*desvPadAmostMediaVelDes)+(abs(-parteAbs)*desvPadAmostMediaVelSub)
+
+        self.arrayCargas.append(carga)
+
+        self.arrayRaios.append(raio)
+
+        self.arrayErrCargas.append(erroCarga)
+
+        self.arrayErrRaios.append(erroRaio)
+
+        self.arrayPorctErrCargas.append(erroCarga/carga)
+
+        self.arrayPorctErrRaios.append(erroRaio/raio)
+
+    # Método de reincinialização do programa
+    # antes da finalização dos cálculos iniciais
     def cancelarOsCalculosFeitos(self):
 
         # Precisa limpar as arrays e abrir novamente 
@@ -507,10 +616,24 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrayDesvPadAmostMediaVelSub = []
 
+        self.arrayVelDesconsdrds = []
+
+        self.arrayCargas = []
+
+        self.arrayErrCargas = []
+
+        self.arrayPorctErrCargas = []
+
+        self.arrayRaios = []
+
+        self.arrayErrRaios = []
+
+        self.arrayPorctErrRaios = []
+
         self.arrayCaminhosArquivos = None
 
         self.diretorio = None
-        
+
         self.voltagem = None
 
         self.densGot = None
@@ -523,11 +646,19 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.constante2 = None
 
+        self.viscosidadeAr = 1.82 * 10**(-5)
+
+        self.gravidade = 9.80665
+
+        self.densidadeAr_p2 = 1.293
+
         self.janelaAtribuicao.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
         self.janela_execucao.hide()
 
         self.janela_atribuicao.show()
+
+        self.janela_atribuicao.setWindowIcon(QIcon(resource_path(r"icones/logoMillikan.ico")))
 
         self.janela_execucao.close()
 
