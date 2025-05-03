@@ -28,6 +28,10 @@ from interfaceGerada.janelaAtribuicao import Ui_janelaAtribuicao
 
 from interfaceGerada.janelaExecucao import Ui_MainWindowExecucao
 
+from interfaceGerada.janelaAvaliacao import Ui_MainWindowAvaliacao  
+
+from interfaceGerada.janelaEdicao import Ui_janelaEdicao
+
 # Tentar resolver problema dos ícones que não estão aparecendo nas janelas, solução
 # retirada de:
 # https://stackoverflow.com/questions/31836104/pyinstaller-and-onefile-how-to-include-an-image-in-the-exe-file
@@ -89,9 +93,11 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.setupUi(self)
 
+        # Configuração do ícone
+
         self.setWindowIcon(QIcon(resource_path(r"icones\logoMillikan.ico")))
 
-        self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
+        # Inicialização do objeto janela de atribuição
 
         self.janela_atribuicao = QMainWindow()
 
@@ -99,15 +105,35 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.janelaAtribuicao.setupUi(self.janela_atribuicao)
 
+        # Inicialização do objeto janela de execução
+
         self.janela_execucao = QMainWindow()
 
         self.janelaExecucao = Ui_MainWindowExecucao()
 
         self.janelaExecucao.setupUi(self.janela_execucao)
 
+        # Inicialização do objeto janela de avaliação
+
+        self.janela_avaliacao = QMainWindow()
+
+        self.janelaAvaliacao = Ui_MainWindowAvaliacao()
+
+        self.janelaAvaliacao.setupUi(self.janela_avaliacao)
+
+        # Inicialização do objeto janela de edição
+
+        self.janela_edicao = QMainWindow()
+
+        self.janelaEdicao = Ui_janelaEdicao()
+
+        self.janelaEdicao.setupUi(self.janela_edicao)
+
+        # Estabelecimento de objetos já pré-existentes
+
         self.progressBar = self.janelaExecucao.progressBarExecucao
 
-        self.janelaExecucao.pushButtonCancelar.clicked.connect(self.cancelarOsCalculosFeitos)
+        self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
 
         ############
         ############
@@ -118,6 +144,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.pushButtonSelecPasta.clicked.connect(self.buscarDirArquivosTxt)
 
         self.pushButton_executar.clicked.connect(self.extrairVariaveis)
+
+        self.janelaExecucao.pushButtonCancelar.clicked.connect(self.cancelarOsCalculosFeitos)
 
         #############
         #############
@@ -174,6 +202,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         # Array dos caminhos dos arquivos .txt
         self.arrayCaminhosArquivos = None
+
+        # Array dos nomes dos arquivos .txt
+        self.arrayNomesArquivos = None
 
         # Inicialização do atributo diretório
         self.diretorio = None
@@ -344,9 +375,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # regida pelo número de arquivos txt presentes na pasta.
         numeroDeRepeticoes = len(arrayCaminhosTxt)
 
-        # splitext é para excluir a extensão .txt do fim do nome base (basename)
-        arrayNomesTxt = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
-
         time.sleep(0.5)
         
         self.atualizar_progresso(10, "Iniciando Varredura")
@@ -436,21 +464,40 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
 
+            self.arrayCaminhosArquivos.append(arrayCaminhosTxt[i])
+
         time.sleep(0.5)
 
         self.atualizar_progresso(50, "Calculando os valores de carga e raio das gotas e seus erros")
 
         time.sleep(0.5)
+
+        # Calculando as cargas, os raios e seus erros
         
         for i in range(numeroDeRepeticoes):
 
             self.calcularCargaRaioGota(i)
+
+        # Essa linha de comando é colocada após o laço de repetição a fim de 
+        # garantir que todos os nomes guardados são provenientes de resultados 
+        # sem problemas na estrutura do arquivo .txt
+
+        # splitext é para excluir a extensão .txt do fim do nome base (basename)
+        self.arrayNomesArquivos = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
 
         time.sleep(0.5)
         
         self.atualizar_progresso(100, "Completo")
         
         time.sleep(0.5)
+
+        self.janela_execucao.hide()
+
+        self.janela_avaliacao.show()
+
+        self.janela_avaliacao.setWindowIcon(QIcon(resource_path(r'icones\logoMillikan.ico')))
+
+        self.janela_execucao.close()
 
         ####################################
         ####################################
@@ -631,6 +678,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.arrayPorctErrRaios = []
 
         self.arrayCaminhosArquivos = None
+
+        self.arrayNomesArquivos = None
 
         self.diretorio = None
 

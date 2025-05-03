@@ -45,7 +45,7 @@
        <widget class="QFrame" name="frameTabela">
         <property name="minimumSize">
          <size>
-          <width>800</width>
+          <width>1000</width>
           <height>250</height>
          </size>
         </property>
@@ -65,6 +65,12 @@
       </item>
       <item>
        <widget class="QFrame" name="frame_grafico">
+        <property name="minimumSize">
+         <size>
+          <width>1000</width>
+          <height>800</height>
+         </size>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
