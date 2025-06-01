@@ -215,7 +215,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         #############
         #############
 
-        # Array que vai armazenar os caminhos de cada voltagem
+        # "Array 2D" que vai armazenar os caminhos de cada voltagem
         self.arrayArrayPaths = []
 
         # Array que vai armazenar as voltagens
@@ -224,8 +224,11 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         """
         Aqui, podemos trabalhar da seguinte maneira, os endereços das arrays de voltagem podem
         coincidir com os endereços das arrays de arrays ("Arrays 2D") ou das "arrays 3D"
+        Já adicionei o sistema de preenchimento da array 2d arrArrsNomFileP_Voltgm e a limpeza
+        dela em caso de erro. Depois precisamos partir para as adequações do método executarCalculos
         """
 
+        # Array 2D dos nomes dos arquivos por voltagem
         self.arrArrsNomFileP_Voltgm = []
 
         # Array das arrays de velocidades de subida e descida
@@ -392,6 +395,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                     self.arrayVoltagens = []
 
+                    self.arrArrsNomFileP_Voltgm = []
+
                     raise ValueError(f"O ARQUIVO {nomesArquivosTxtOrden[i]} ESTÁ EM UM FORMATO INAPROPRIADO.\n"
                                      f"{caracteres_repr} NÃO É UM NÚMERO.\n"
                                      "Os 3 primeiros caracteres devem corresponder ao valor de voltagem.\n"
@@ -445,6 +450,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
                     self.arrayArrayPaths = []
 
                     self.arrayVoltagens = []
+
+                    self.arrArrsNomFileP_Voltgm = []
 
                     caracteres = nomesArquivosTxtOrden[i][:3]
 

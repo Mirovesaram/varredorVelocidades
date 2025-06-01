@@ -16,3 +16,4 @@ calculoCargaRaioErro.py
 /scripts/
 /cargasTeste350V/
 /build/
+/interfaceGerada/__pycache__/
