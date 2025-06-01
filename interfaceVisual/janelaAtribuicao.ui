@@ -644,8 +644,11 @@
                        <height>33</height>
                       </size>
                      </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Você deve colocar essa informação no nome de seus arquivos.&lt;/p&gt;&lt;p&gt;Os 3 primeiros caraceteres devem começar com o valor de voltagem. No &lt;/p&gt;&lt;p&gt;caso, o arquivo pode ter qualquer nome, o importante é que esse nome inicie &lt;/p&gt;&lt;p&gt;com o valor de voltagem. Por exemplo, se você tem um arquivo de uma &lt;/p&gt;&lt;p&gt;gota que foi registrada com uma voltagem de 50 V, o nome do arquivo&lt;/p&gt;&lt;p&gt;tem que começar com 050. Ou seja:&lt;/p&gt;&lt;p&gt;050PodeVirQualquerCoisaDepois.txt (Correto)&lt;/p&gt;&lt;p&gt;Não pode ser:&lt;/p&gt;&lt;p&gt;50PodeVirQualquerCoisaDepois.txt (Errado)&lt;/p&gt;&lt;p&gt;Nem pode:&lt;/p&gt;&lt;p&gt;QualquerCoisa.txt (Errado)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="readOnly">
-                      <bool>false</bool>
+                      <bool>true</bool>
                      </property>
                      <property name="maximum">
                       <double>100000.000000000000000</double>
