@@ -184,6 +184,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.janelaEdicao.setupUi(self.janela_edicao)
 
         # Estabelecimento de objetos já pré-existentes
+
+        self.doubleSpinBox_voltagem.setEnabled(False)
+
         self.progressBar = self.janelaExecucao.progressBarExecucao
 
         self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
@@ -220,13 +223,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         # Array que vai armazenar as voltagens
         self.arrayVoltagens = []
-
-        """
-        Aqui, podemos trabalhar da seguinte maneira, os endereços das arrays de voltagem podem
-        coincidir com os endereços das arrays de arrays ("Arrays 2D") ou das "arrays 3D"
-        Já adicionei o sistema de preenchimento da array 2d arrArrsNomFileP_Voltgm e a limpeza
-        dela em caso de erro. Depois precisamos partir para as adequações do método executarCalculos
-        """
 
         # Array 2D dos nomes dos arquivos por voltagem
         self.arrArrsNomFileP_Voltgm = []
@@ -292,11 +288,16 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # Array da estrutura dos checkboxes para considerar as gotas
         self.arrArrsCheckBoxesP_Vltgm = []
 
+        # Esse dado vai ser somente utilizado como
+        # modelo para tabela
+        self.dataFrameTabela = None
+
+        # Essa array irá armazenar diferentes dataframes
+        # por voltagem
+        self.arrDfP_Vltgm = []
+
         # Inicialização do atributo diretório
         self.diretorio = None
-        
-        # Inicialização do atributo voltagem
-        self.voltagem = None
 
         # Inicialização do atributo densidade da gota
         self.densGot = None
@@ -669,6 +670,8 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrArrsCheckBoxesP_Vltgm.append([])
 
+        self.arrDfP_Vltgm.append([])
+
         time.sleep(0.5)
         
         self.atualizar_progresso(0.2*quantilProgresso, "Calculando as constantes")
@@ -767,7 +770,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(0.4*quantilProgresso, "Calculando os valores de carga e raio das gotas e seus erros")
+        self.atualizar_progresso(0.7*quantilProgresso, "Calculando os valores de carga e raio das gotas e seus erros")
 
         time.sleep(0.5)
 
@@ -791,7 +794,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(0.5*quantilProgresso, "Classificando as gotas")
+        self.atualizar_progresso(0.8*quantilProgresso, "Classificando as gotas")
 
         time.sleep(0.5)
 
@@ -801,7 +804,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(1*quantilProgresso, "Criando e configurando os check-boxes")
+        self.atualizar_progresso(0.9*quantilProgresso, "Criando e configurando os check-boxes")
 
         time.sleep(0.5)
 
@@ -809,11 +812,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.arrArrsCheckBoxesP_Vltgm.append(self.criarCheckBoxes(enderecoCheckBox=j, enderecoVoltagem=enderecoVoltagem))
 
-    def prepararTabelaGrafico(self):
-
         time.sleep(0.5)
 
-        self.atualizar_progresso(80, "Preparando para dispor os resultados em uma tabela")
+        self.atualizar_progresso(1*quantilProgresso, "Criando os dataframes de dados")
 
         time.sleep(0.5)
 
@@ -824,6 +825,51 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             "Erro relativo (%) (C)": [x * 100 for x in self.arrArrsPorctErrCargasP_Vltgm[enderecoVoltagem]],
             "Raio (m)": self.arrArrsRaiosP_Vltgm[enderecoVoltagem],
             "Erro relativo (%) (m)": [x * 100 for x in self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem]]
+        }
+
+        self.arrDfP_Vltgm[enderecoVoltagem] =pd.DataFrame(baseParaDf)
+
+    def prepararTabelaGrafico(self):
+
+        time.sleep(0.5)
+
+        self.atualizar_progresso(80, "Preparando para dispor os resultados em uma tabela")
+
+        time.sleep(0.5)
+
+        arrayGeralNomes = []
+
+        arrayGeralQualidades = []
+
+        arrayGeralCargas = []
+        
+        arrayGeralRaios = []
+
+        arrGeralErrRelCarga = []
+
+        arrGeralErrRelRaio = []
+
+        for i in range(len(self.arrayVoltagens)):
+
+            arrayGeralNomes += self.arrArrsNomFileP_Voltgm[i]
+
+            arrayGeralQualidades += self.arrArrsClassifGotP_Vltgm[i]
+
+            arrayGeralCargas += self.arrArrsCargasP_Vltgm[i]
+            
+            arrayGeralRaios += self.arrArrsRaiosP_Vltgm[i]
+
+            arrGeralErrRelCarga += self.arrArrsPorctErrCargasP_Vltgm[i]
+
+            arrGeralErrRelRaio += self.arrArrsPorctErrRaiosP_Vltgm[i]
+
+        baseParaDf = {
+            "Nome da gota": arrayGeralNomes,
+            "Qualidade da gota": arrayGeralQualidades,
+            "Carga (C)": arrayGeralCargas,
+            "Erro relativo (%) (C)": [x * 100 for x in arrGeralErrRelCarga],
+            "Raio (m)": arrayGeralRaios,
+            "Erro relativo (%) (m)": [x * 100 for x in arrGeralErrRelRaio]
         }
 
         self.dataFrameTabela = pd.DataFrame(baseParaDf)
@@ -887,9 +933,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrArrArrsVelDesP_VltgmInsts = []
 
-        self.arrArrArrsVelSubP_VltgmNullInsts = []
-
         self.arrArrArrsVelDesP_VltgmNullInsts = []
+
+        self.arrArrArrsVelSubP_VltgmNullInsts = []
 
         self.arrArrsDesvPadAmostVelSubP_Vltgm = []
 
@@ -919,9 +965,11 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrArrsCheckBoxesP_Vltgm = []
 
-        self.diretorio = None
+        self.dataFrameTabela = None
 
-        self.voltagem = None
+        self.arrDfP_Vltgm = []
+
+        self.diretorio = None
 
         self.densGot = None
 
