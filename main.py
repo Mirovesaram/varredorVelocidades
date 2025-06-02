@@ -232,64 +232,65 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.arrArrsNomFileP_Voltgm = []
 
         # Array das arrays de velocidades de subida e descida
-        self.arrayDasArraysVelSub = []
+        self.arrArrArrsVelSubP_Vltgm = []
 
-        self.arrayDasArraysVelDes = []
+        self.arrArrArrsVelDesP_Vltgm = []
 
         # Array das arrays de velocidades desconsideradas
         # que vão ser avaliadas pelo usuário
-        self.arrayDasArraysVelDesconsdrds = []
+        self.arrArrArrsVelSubP_VltgmNull = []
+
+        self.arrArrArrsVelDesP_VltgmNull = []
 
         # Array das arrays dos instantes correspondentes 
         # a essas velocidades de subida e descida
-        self.arrayDasArraysVelSubInstantes = []
+        self.arrArrArrsVelSubP_VltgmInsts = []
 
-        self.arrayDasArraysVelDesInstantes = []
+        self.arrArrArrsVelDesP_VltgmInsts = []
 
         # Array das arrays dos instantes correspondentes 
         # a essas velocidades desconsideradas
         # que vão ser avaliadas pelo usuário
-        self.arrayDasArraysVelDesconsInsts = []
+        self.arrArrArrsVelDesP_VltgmNullInsts = []
+
+        self.arrArrArrsVelSubP_VltgmNullInsts = []
 
         # Array de desvios padrões amostrais das velocidades 
         # de subida e descida
-        self.arrayDesvPadAmostVelSub = []
+        self.arrArrsDesvPadAmostVelSubP_Vltgm = []
 
-        self.arrayDesvPadAmostVelDes = []
+        self.arrArrsDesvPadAmostVelDesP_Vltgm = []
 
         #Array de médias das velocidades de subida e descida
-        self.arrayMediaVelSub = []
+        self.arrArrsMedVelSubP_Vltgm = []
 
-        self.arrayMediaVelDes = []
+        self.arrArrsMedVelDesP_Vltgm = []
 
         # Array de desvios padrões amostrais da média de (erros) 
         # velocidades de subida e descida
-        self.arrayDesvPadAmostMediaVelDes = []
+        self.arrArrsDesvPadAmostMedVelDesP_Vltgm = []
 
-        self.arrayDesvPadAmostMediaVelSub = []
+        self.arrArrsDesvPadAmostMedVelSubP_Vltgm = []
 
         # Arrays das cargas, raios (E seus erros) 
         # das gotas (E por fim, os erros relativos)
+        self.arrArrsCargasP_Vltgm = []
 
-        self.arrayCargas = []
+        self.arrArrsErrCargasP_Vltgm = []
 
-        self.arrayErrCargas = []
+        self.arrArrsPorctErrCargasP_Vltgm = []
 
-        self.arrayPorctErrCargas = []
+        self.arrArrsRaiosP_Vltgm = []
 
-        self.arrayRaios = []
+        self.arrArrsErrRaiosP_Vltgm = []
 
-        self.arrayErrRaios = []
-
-        self.arrayPorctErrRaios = []
+        self.arrArrsPorctErrRaiosP_Vltgm = []
 
         # Array das classificações das gotas
-
-        self.arrayClassificacoesGota = []
+        self.arrArrsClassifGotP_Vltgm = []
 
         # Array da estrutura dos checkboxes para considerar as gotas
-
-        self.arrayCheckBoxes = []
+        self.arrArrsCheckBoxesP_Vltgm = []
 
         # Inicialização do atributo diretório
         self.diretorio = None
@@ -516,18 +517,19 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         arrayCaminhosTxt = glob.glob(buscaDosTxts)
 
-        """
-        Pronto. Agora temos um arranjo que separa os caminhos por voltagem.
-        Vamos avaliar como adicionar isso com certas modificações. Aproveitando
-        um módulo responsivo. Vamos avaliar como reestruturar os métodos existentes 
-        e as estruturas de dados já existentes.
-        """
-
         if arrayCaminhosTxt != []:
 
             self.separarCaminhos(arrayCaminhosTxt)
 
-            self.executarCalculos(arrayCaminhosTxt)
+            quantilProgresso = 70/len(self.arrayVoltagens)
+
+            for i in range(len(self.arrayVoltagens)):
+
+                self.executarCalculos(enderecoVoltagem=i, quantilProgresso=quantilProgresso)
+
+                quantilProgresso += quantilProgresso
+
+            self.prepararTabelaGrafico()
 
         else:
             
@@ -595,7 +597,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     # ele só será para estabelecimento inicial dos resultados e outros
     # métodos se encarregarão de editar esses dados inicialmente 
     # estabelecidos aqui
-    def executarCalculos(self, arrayCaminhosTxt):
+    def executarCalculos(self, enderecoVoltagem, quantilProgresso):
 
         # Processo para transicionar entre janelas
 
@@ -613,17 +615,63 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # Delays de 1s propositais
         time.sleep(0.5)
         
-        self.atualizar_progresso(0, "Iniciando processamento")
+        self.atualizar_progresso(0.1*quantilProgresso, "Iniciando processamento")
         
         time.sleep(0.5)
 
         # Vou fazer uma iteração global do algoritmo que é
-        # regida pelo número de arquivos txt presentes na pasta.
-        numeroDeRepeticoes = len(arrayCaminhosTxt)
+        # regida pelo número de arquivos txt presentes na array.
+        # da voltagem em análise
+        numeroDeRepeticoes = len(self.arrayArrayPaths[enderecoVoltagem])
+
+        # Estabelecimento das arrays para a voltagem em análise
+        self.arrArrArrsVelSubP_Vltgm.append([])
+
+        self.arrArrArrsVelDesP_Vltgm.append([])
+
+        self.arrArrArrsVelSubP_VltgmNull.append([])
+
+        self.arrArrArrsVelDesP_VltgmNull.append([])
+
+        self.arrArrArrsVelSubP_VltgmInsts.append([])
+
+        self.arrArrArrsVelDesP_VltgmInsts.append([])
+
+        self.arrArrArrsVelSubP_VltgmNullInsts.append([])
+
+        self.arrArrArrsVelDesP_VltgmNullInsts.append([])
+
+        self.arrArrsDesvPadAmostVelSubP_Vltgm.append([])
+
+        self.arrArrsDesvPadAmostVelDesP_Vltgm.append([])
+
+        self.arrArrsMedVelSubP_Vltgm.append([])
+
+        self.arrArrsMedVelDesP_Vltgm.append([])
+
+        self.arrArrsDesvPadAmostMedVelSubP_Vltgm.append([])
+
+        self.arrArrsDesvPadAmostMedVelDesP_Vltgm.append([])
+
+        self.arrArrsCargasP_Vltgm.append([])
+
+        self.arrArrsErrCargasP_Vltgm.append([])
+
+        self.arrArrsPorctErrCargasP_Vltgm.append([])
+
+        self.arrArrsRaiosP_Vltgm.append([])
+
+        self.arrArrsErrRaiosP_Vltgm.append([])
+
+        self.arrArrsPorctErrRaiosP_Vltgm.append([])
+
+        self.arrArrsClassifGotP_Vltgm.append([])
+
+        self.arrArrsCheckBoxesP_Vltgm.append([])
 
         time.sleep(0.5)
         
-        self.atualizar_progresso(10, "Iniciando Varredura")
+        self.atualizar_progresso(0.2*quantilProgresso, "Calculando as constantes")
         
         time.sleep(0.5)
 
@@ -634,7 +682,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
         
-        self.atualizar_progresso(15, "Iniciando Varredura")
+        self.atualizar_progresso(0.3*quantilProgresso, "Iniciando Varredura")
         
         time.sleep(0.5)
 
@@ -643,21 +691,25 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         for i in range(numeroDeRepeticoes):
 
-            # Estabelecimento das arrays
+            # Estabelecimento das arrays para a array recém adicionada
 
-            self.arrayDasArraysVelSub.append([])
+            self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem].append([])
 
-            self.arrayDasArraysVelDes.append([])
+            self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem].append([])
 
-            self.arrayDasArraysVelDesconsdrds.append([])
+            self.arrArrArrsVelSubP_VltgmNull[enderecoVoltagem].append([])
 
-            self.arrayDasArraysVelSubInstantes.append([])
+            self.arrArrArrsVelDesP_VltgmNull[enderecoVoltagem].append([])
 
-            self.arrayDasArraysVelDesInstantes.append([])
+            self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem].append([])
 
-            self.arrayDasArraysVelDesconsInsts.append([])
+            self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem].append([])
 
-            txtEmAnalise = arrayCaminhosTxt[i]
+            self.arrArrArrsVelSubP_VltgmNullInsts[enderecoVoltagem].append([])
+
+            self.arrArrArrsVelDesP_VltgmNullInsts[enderecoVoltagem].append([])
+
+            txtEmAnalise = self.arrayArrayPaths[enderecoVoltagem][i]
 
             # Isso é feito para garantir que caso 
             # ocorra um erro por causa da estrutura 
@@ -697,70 +749,67 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             # Configuração inicial dos resultados 
             # para os conjuntos de velocidade, suas médias, 
             # seus desvios padrão amostrais e seus erros
-            desvioPadraoAmostralVelocidadeDescida = np.std(self.arrayDasArraysVelDes[i], ddof=1)
+            desvioPadraoAmostralVelocidadeDescida = np.std(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i], ddof=1)
 
-            desvioPadraoAmostralVelocidadeSubida = np.std(self.arrayDasArraysVelSub[i], ddof=1)
+            desvioPadraoAmostralVelocidadeSubida = np.std(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i], ddof=1)
 
-            self.arrayDesvPadAmostVelSub.append(desvioPadraoAmostralVelocidadeSubida)
+            self.arrArrsDesvPadAmostVelSubP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeSubida)
 
-            self.arrayDesvPadAmostVelDes.append(desvioPadraoAmostralVelocidadeDescida)
+            self.arrArrsDesvPadAmostVelDesP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeDescida)
 
-            self.arrayMediaVelSub.append(np.mean(self.arrayDasArraysVelSub[i]))
+            self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i]))
 
-            self.arrayMediaVelDes.append(np.mean(self.arrayDasArraysVelDes[i]))
+            self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i]))
 
-            self.arrayDesvPadAmostMediaVelDes.append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrayDasArraysVelDes[i]))))
+            self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i]))))
 
-            self.arrayDesvPadAmostMediaVelSub.append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrayDasArraysVelSub[i]))))
-
-            self.arrayCaminhosArquivos.append(arrayCaminhosTxt[i])
+            self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i]))))
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(50, "Calculando os valores de carga e raio das gotas e seus erros")
+        self.atualizar_progresso(0.4*quantilProgresso, "Calculando os valores de carga e raio das gotas e seus erros")
 
         time.sleep(0.5)
 
         # Calculando as cargas, os raios e seus erros
-        for i in range(numeroDeRepeticoes):
+        for j in range(numeroDeRepeticoes):
 
             # É necessário fazer dessa maneira pois colocar o .append no próprio
             # método de cálculos do raio e carga é problemático. Já que esse método
             # não vai ser utilizado só pelo método principal da janela de execução
-            self.arrayCargas.append(self.calcularCargaRaioGota(i)[0])
+            self.arrArrsCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[0])
 
-            self.arrayRaios.append(self.calcularCargaRaioGota(i)[1])
+            self.arrArrsRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[1])
 
-            self.arrayErrCargas.append(self.calcularCargaRaioGota(i)[2])
+            self.arrArrsErrCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[2])
 
-            self.arrayErrRaios.append(self.calcularCargaRaioGota(i)[3])
+            self.arrArrsErrRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[3])
 
-            self.arrayPorctErrCargas.append(self.calcularCargaRaioGota(i)[4])
+            self.arrArrsPorctErrCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[4])
 
-            self.arrayPorctErrRaios.append(self.calcularCargaRaioGota(i)[5])
-
-        time.sleep(0.5)
-
-        self.atualizar_progresso(60, "Classificando as gotas")
+            self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[5])
 
         time.sleep(0.5)
 
-        for i in range(numeroDeRepeticoes):
-
-            self.arrayClassificacoesGota.append(self.classificarGota(i))
+        self.atualizar_progresso(0.5*quantilProgresso, "Classificando as gotas")
 
         time.sleep(0.5)
 
-        self.atualizar_progresso(70, "Nomeando os resultados a partir dos nomes de seus arquivos")
+        for k in range(numeroDeRepeticoes):
+
+            self.arrArrsClassifGotP_Vltgm.append(self.classificarGota(enderecoGota=k, enderecoVoltagem=enderecoVoltagem))
 
         time.sleep(0.5)
 
-        # Essa linha de comando é colocada após o laço de repetição a fim de 
-        # garantir que todos os nomes guardados são provenientes de resultados 
-        # sem problemas na estrutura do arquivo .txt
+        self.atualizar_progresso(1*quantilProgresso, "Criando e configurando os check-boxes")
 
-        # splitext é para excluir a extensão .txt do fim do nome base (basename)
-        self.arrayNomesArquivos = [os.path.splitext(os.path.basename(itemDoCaminhosTxt))[0] for itemDoCaminhosTxt in arrayCaminhosTxt]
+        time.sleep(0.5)
+
+        for l in range(numeroDeRepeticoes):
+
+            self.arrArrsCheckBoxesP_Vltgm.append(self.criarCheckBoxes(enderecoCheckBox=j, enderecoVoltagem=enderecoVoltagem))
+
+    def prepararTabelaGrafico(self):
 
         time.sleep(0.5)
 
@@ -768,17 +817,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         time.sleep(0.5)
 
-        for i in range(numeroDeRepeticoes):
-
-            self.arrayCheckBoxes.append(self.criarCheckBoxes(i))
-
         baseParaDf = {
-            "Nome da gota": self.arrayNomesArquivos,
-            "Qualidade da gota": self.arrayClassificacoesGota,
-            "Carga (C)": self.arrayCargas,
-            "Erro relativo (%) (C)": [x * 100 for x in self.arrayPorctErrCargas],
-            "Raio (m)": self.arrayRaios,
-            "Erro relativo (%) (m)": [x * 100 for x in self.arrayPorctErrRaios]
+            "Nome da gota": self.arrArrsNomFileP_Voltgm[enderecoVoltagem],
+            "Qualidade da gota": self.arrArrsClassifGotP_Vltgm[enderecoVoltagem],
+            "Carga (C)": self.arrArrsCargasP_Vltgm[enderecoVoltagem],
+            "Erro relativo (%) (C)": [x * 100 for x in self.arrArrsPorctErrCargasP_Vltgm[enderecoVoltagem]],
+            "Raio (m)": self.arrArrsRaiosP_Vltgm[enderecoVoltagem],
+            "Erro relativo (%) (m)": [x * 100 for x in self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem]]
         }
 
         self.dataFrameTabela = pd.DataFrame(baseParaDf)
@@ -802,14 +847,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.toolbar = NavigationToolBar(self.canvas, self)
 
         time.sleep(0.5)
-        
+
         self.atualizar_progresso(100, "Completo")
         
         time.sleep(0.5)
-
-        # Para fins de teste
-        """print(self.arrayErrCargas)
-        print(self.arrayErrRaios)"""
 
         self.janela_execucao.hide()
 
@@ -828,45 +869,55 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # Precisa limpar as arrays e abrir novamente 
         # a janela principal fechando a de executar 
         # voltando ao estado inicial
-        self.arrayDasArraysVelSub = []
+        self.arrayArrayPaths = []
 
-        self.arrayDasArraysVelDes = []
+        self.arrayVoltagens = []
 
-        self.arrayDasArraysVelDesconsdrds = []
+        self.arrArrsNomFileP_Voltgm = []
 
-        self.arrayDasArraysVelSubInstantes = []
+        self.arrArrArrsVelSubP_Vltgm = []
 
-        self.arrayDasArraysVelDesInstantes = []
+        self.arrArrArrsVelDesP_Vltgm = []
 
-        self.arrayDasArraysVelDesconsInsts = []
+        self.arrArrArrsVelSubP_VltgmNull = []
 
-        self.arrayDesvPadAmostVelSub = []
+        self.arrArrArrsVelDesP_VltgmNull = []
 
-        self.arrayDesvPadAmostVelDes = []
+        self.arrArrArrsVelSubP_VltgmInsts = []
 
-        self.arrayMediaVelSub = []
+        self.arrArrArrsVelDesP_VltgmInsts = []
 
-        self.arrayMediaVelDes = []
+        self.arrArrArrsVelSubP_VltgmNullInsts = []
 
-        self.arrayDesvPadAmostMediaVelDes = []
+        self.arrArrArrsVelDesP_VltgmNullInsts = []
 
-        self.arrayDesvPadAmostMediaVelSub = []
+        self.arrArrsDesvPadAmostVelSubP_Vltgm = []
 
-        self.arrayCargas = []
+        self.arrArrsDesvPadAmostVelDesP_Vltgm = []
 
-        self.arrayErrCargas = []
+        self.arrArrsMedVelSubP_Vltgm = []
 
-        self.arrayPorctErrCargas = []
+        self.arrArrsMedVelDesP_Vltgm = []
 
-        self.arrayRaios = []
+        self.arrArrsDesvPadAmostMedVelDesP_Vltgm = []
 
-        self.arrayErrRaios = []
+        self.arrArrsDesvPadAmostMedVelSubP_Vltgm = []
 
-        self.arrayPorctErrRaios = []
+        self.arrArrsCargasP_Vltgm = []
 
-        self.arrayClassificacoesGota = []
+        self.arrArrsErrCargasP_Vltgm = []
 
-        self.arrayCheckBoxes = []
+        self.arrArrsPorctErrCargasP_Vltgm = []
+
+        self.arrArrsRaiosP_Vltgm = []
+
+        self.arrArrsErrRaiosP_Vltgm = []
+
+        self.arrArrsPorctErrRaiosP_Vltgm = []
+
+        self.arrArrsClassifGotP_Vltgm = []
+
+        self.arrArrsCheckBoxesP_Vltgm = []
 
         self.diretorio = None
 
@@ -898,15 +949,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.janela_execucao.close()
 
-    def criarCheckBoxes(self, enderecoCheckBox):
-
-        i = enderecoCheckBox
+    def criarCheckBoxes(self, enderecoCheckBox, enderecoVoltagem):
 
         self.janelaAvaliacao.checkBox = QtWidgets.QCheckBox(self.janelaAvaliacao.scrollAreaCheckBoxes)
 
-        self.janelaAvaliacao.checkBox.setObjectName(f'chechbox{i}')
+        self.janelaAvaliacao.checkBox.setObjectName(f'chechbox{enderecoCheckBox}Voltagem{enderecoVoltagem}')
 
-        self.janelaAvaliacao.checkBox.setText(f'{self.arrayNomesArquivos[i]}')
+        self.janelaAvaliacao.checkBox.setText(f'{self.arrayNomesArquivos[enderecoVoltagem][enderecoCheckBox]}')
 
         self.janelaAvaliacao.checkBox.stateChanged.connect(self.exibirGraficoCarga_Raio)
 
@@ -934,7 +983,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         resultados = [arrayCargasTemp, arrayCargasErrTemp, arrayRaiosTemp, arrayRaiosErrTemp]
 
-        numeroDeRepeticoes = len(self.arrayCargas)
+        numeroDeRepeticoes = len(self.arrArrsCargasP_Vltgm)
 
         for i in range(numeroDeRepeticoes):
 
@@ -944,17 +993,17 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             # o append dessas informações é pulado
             # e a array temporária só vai ter as
             # gotas que estão checkadas
-            if self.arrayCheckBoxes[i].isChecked() == True:
+            if self.arrArrsCheckBoxesP_Vltgm[i].isChecked() == True:
 
                 continue
 
-            arrayCargasTemp.append(self.arrayCargas[i])
+            arrayCargasTemp.append(self.arrArrsCargasP_Vltgm[i])
 
-            arrayRaiosTemp.append(self.arrayRaios[i])
+            arrayRaiosTemp.append(self.arrArrsRaiosP_Vltgm[i])
 
-            arrayCargasErrTemp.append(self.arrayErrCargas[i])
+            arrayCargasErrTemp.append(self.arrArrsErrCargasP_Vltgm[i])
 
-            arrayRaiosErrTemp.append(self.arrayErrRaios[i])
+            arrayRaiosErrTemp.append(self.arrArrsErrRaiosP_Vltgm[i])
 
         # Essas arrays são requisitadas no plot em si
         return resultados
@@ -981,25 +1030,25 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         def atribuicaoVelocidadeDescida():
 
-            self.arrayDasArraysVelDes[i].append(velocidade)
+            self.arrArrArrsVelDesP_Vltgm[i].append(velocidade)
             # Tem que se repensar esses appends caso eu
             # deseje possibilitar que o usuário faça a varredura
             """Sinceramente, acho que não seja necessário"""
-            self.arrayDasArraysVelDesInstantes[i].append(instante)
+            self.arrArrArrsVelDesP_VltgmInstantes[i].append(instante)
 
         def atribuicaoVelocidadeSubida():
 
-            self.arrayDasArraysVelSub[i].append(velocidade)
+            self.arrArrArrsVelSubP_Vltgm[i].append(velocidade)
             # Tem que se repensar esses appends caso eu
             # deseje possibilitar que o usuário faça a varredura
             """Sinceramente, acho que não seja necessário"""
-            self.arrayDasArraysVelSubInstantes[i].append(instante)
+            self.arrArrArrsVelSubP_VltgmInstantes[i].append(instante)
 
         def atribuirVelocidadeDesconsiderada():
 
-            self.arrayDasArraysVelDesconsdrds[i].append(velocidade)
+            self.arrArrArrsVelSubP_VltgmNull[i].append(velocidade)
             
-            self.arrayDasArraysVelDesconsInsts[i].append(instante)
+            self.arrArrArrsVelDesP_VltgmconsInsts[i].append(instante)
 
         for j in range(quantidadeLinhas):
 
@@ -1141,13 +1190,11 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         return ponto
 
     # Métodos de cálculo de carga e raio de dada gota i
-    def calcularCargaRaioGota(self, indice_i):
+    def calcularCargaRaioGota(self, enderecoVoltagem, enderecoGota):
 
-        i = indice_i
+        velDes = self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
 
-        velDes = self.arrayMediaVelDes[i]
-
-        velSub = self.arrayMediaVelSub[i]
+        velSub = self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
 
         constante1 = self.constante1
 
@@ -1159,9 +1206,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         diferenca = abs(velDes) - abs(velSub)
 
-        desvPadAmostMediaVelDes = self.arrayDesvPadAmostMediaVelDes[i]
+        desvPadAmostMediaVelDes = self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
 
-        desvPadAmostMediaVelSub = self.arrayDesvPadAmostMediaVelSub[i]
+        desvPadAmostMediaVelSub = self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
 
         resultados = []
 
@@ -1213,19 +1260,17 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         return resultados
     
     # Método de classificação de dada gota i
-    def classificarGota(self, indice_i):
-
-        i = indice_i
+    def classificarGota(self, enderecoGota, enderecoVoltagem):
 
         # Se um dos conjuntos de velocidade tiver
         # menos que 10 itens, é uma gota duvidosa
-        if len(self.arrayDasArraysVelDes[i]) < 10 or len(self.arrayDasArraysVelSub[i]) < 10:
+        if len(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][enderecoGota]) < 10 or len(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][enderecoGota]) < 10:
 
             return "Duvidoso"
         
         # Caso um dos conjuntos de velocidade tiver
         # entre 10 e 20 itens, é uma gota razoável
-        elif (10 <= len(self.arrayDasArraysVelDes[i]) <= 20) or (10 <= len(self.arrayDasArraysVelSub[i]) <= 20):
+        elif (10 <= len(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][enderecoGota]) <= 20) or (10 <= len(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][enderecoGota]) <= 20):
 
             return "Razoável"
 
@@ -1256,22 +1301,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.canvas = FigureCanvas(Figure(figsize=(5,4)))
             self.ax = self.canvas.figure.add_subplot(111)
-
-        """for line in self.ax.lines:
-
-            line.remove()
-
-        for collection in self.ax.collections:
-
-            collection.remove()
-
-        for patch in self.ax.patches:
-
-            patch.remove()
-
-        if self.ax.get_legend() is not None:
-
-            self.ax.get_legend().remove()"""
 
         # Note que aqui utiliza a ideia
         # de retornar uma array. O elemento de 
