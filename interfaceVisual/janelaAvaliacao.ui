@@ -82,6 +82,30 @@
            <property name="spacing">
             <number>0</number>
            </property>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="pushButtonBaixarVels">
+             <property name="font">
+              <font>
+               <pointsize>13</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Salvar dados de velocidade por instante</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pushButtonBaixarDf">
+             <property name="font">
+              <font>
+               <pointsize>13</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Salvar os dados da tabela</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -170,7 +194,11 @@
                  <number>0</number>
                 </property>
                 <item row="0" column="0">
-                 <widget class="QTableView" name="tabelaGotas"/>
+                 <widget class="QTableView" name="tabelaGotas">
+                  <property name="toolTip">
+                   <string>Clique com o botão direito em uma gota para ver a varredura de velocidades</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -240,6 +268,9 @@
                      <width>194</width>
                      <height>194</height>
                     </rect>
+                   </property>
+                   <property name="toolTip">
+                    <string>Clique em uma gota indesejada para desconsiderá-la no gráfico</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_13">
                     <property name="leftMargin">
@@ -354,11 +385,11 @@
             </widget>
            </item>
            <item row="0" column="1" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-            <widget class="QFrame" name="frameSpinBoxCargaElement">
+            <widget class="QFrame" name="frameSpinCheckBoxCargaElement">
              <property name="minimumSize">
               <size>
                <width>200</width>
-               <height>0</height>
+               <height>200</height>
               </size>
              </property>
              <property name="maximumSize">
@@ -366,6 +397,11 @@
                <width>200</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>13</pointsize>
+              </font>
              </property>
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
@@ -384,6 +420,39 @@
                <number>0</number>
               </property>
               <item>
+               <widget class="QCheckBox" name="checkBoxBarraErro">
+                <property name="minimumSize">
+                 <size>
+                  <width>198</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>198</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>13</pointsize>
+                 </font>
+                </property>
+                <property name="acceptDrops">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Habilitar erro</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="tristate">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="labelCargElement">
                 <property name="minimumSize">
                  <size>
@@ -401,6 +470,9 @@
                  <font>
                   <pointsize>13</pointsize>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>Os múltiplos da carga elementar escolhida aparecerão no gráfico</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">margin: 5px;</string>
@@ -436,7 +508,7 @@
                  </font>
                 </property>
                 <property name="toolTip">
-                 <string/>
+                 <string>Os múltiplos da carga elementar escolhida aparecerão no gráfico</string>
                 </property>
                 <property name="minimum">
                  <double>1.000000000000000</double>
@@ -445,7 +517,7 @@
                  <double>10.000000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>0.100000000000000</double>
+                 <double>0.010000000000000</double>
                 </property>
                </widget>
               </item>

@@ -15,8 +15,17 @@ class Ui_MainWindowJanelaDetalhes(object):
     def setupUi(self, MainWindowJanelaDetalhes):
         MainWindowJanelaDetalhes.setObjectName("MainWindowJanelaDetalhes")
         MainWindowJanelaDetalhes.resize(800, 600)
+        MainWindowJanelaDetalhes.setAcceptDrops(True)
         self.centralwidget = QtWidgets.QWidget(MainWindowJanelaDetalhes)
         self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.centralwidget)
+        self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_2.setSpacing(0)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.gridLayoutGrafico = QtWidgets.QGridLayout()
+        self.gridLayoutGrafico.setSpacing(0)
+        self.gridLayoutGrafico.setObjectName("gridLayoutGrafico")
+        self.gridLayout_2.addLayout(self.gridLayoutGrafico, 0, 0, 1, 1)
         MainWindowJanelaDetalhes.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowJanelaDetalhes)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
@@ -31,7 +40,7 @@ class Ui_MainWindowJanelaDetalhes(object):
 
     def retranslateUi(self, MainWindowJanelaDetalhes):
         _translate = QtCore.QCoreApplication.translate
-        MainWindowJanelaDetalhes.setWindowTitle(_translate("MainWindowJanelaDetalhes", "MainWindow"))
+        MainWindowJanelaDetalhes.setWindowTitle(_translate("MainWindowJanelaDetalhes", "Detalhes da gota"))
 
 
 if __name__ == "__main__":

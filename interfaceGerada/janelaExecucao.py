@@ -66,25 +66,6 @@ class Ui_MainWindowExecucao(object):
         self.verticalLayout_3.addWidget(self.labelDescricaoPassos)
         self.horizontalLayout_2.addLayout(self.verticalLayout_3)
         self.verticalLayout.addWidget(self.frameSecaoProgresso)
-        self.frame_SecaoCancelar = QtWidgets.QFrame(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(13)
-        self.frame_SecaoCancelar.setFont(font)
-        self.frame_SecaoCancelar.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame_SecaoCancelar.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.frame_SecaoCancelar.setObjectName("frame_SecaoCancelar")
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.frame_SecaoCancelar)
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_4.setSpacing(0)
-        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setSpacing(0)
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.pushButtonCancelar = QtWidgets.QPushButton(self.frame_SecaoCancelar)
-        self.pushButtonCancelar.setObjectName("pushButtonCancelar")
-        self.horizontalLayout_3.addWidget(self.pushButtonCancelar)
-        self.horizontalLayout_4.addLayout(self.horizontalLayout_3)
-        self.verticalLayout.addWidget(self.frame_SecaoCancelar)
         self.verticalLayout_2.addLayout(self.verticalLayout)
         MainWindowExecucao.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindowExecucao)
@@ -100,8 +81,7 @@ class Ui_MainWindowExecucao(object):
 
     def retranslateUi(self, MainWindowExecucao):
         _translate = QtCore.QCoreApplication.translate
-        MainWindowExecucao.setWindowTitle(_translate("MainWindowExecucao", "MainWindow"))
-        self.pushButtonCancelar.setText(_translate("MainWindowExecucao", "Cancelar"))
+        MainWindowExecucao.setWindowTitle(_translate("MainWindowExecucao", "Executando os cálculos..."))
 
 
 if __name__ == "__main__":

@@ -29,6 +29,8 @@ from matplotlib.figure import Figure
 
 from matplotlib.ticker import MultipleLocator 
 
+import matplotlib.colors as mcolors
+
 import numpy as np
 
 import glob
@@ -37,11 +39,11 @@ import time
 
 import math
 
-from PyQt5.QtWidgets import QMainWindow, QFrame, QApplication, QFileDialog, QMessageBox, QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QFrame, QMenu, QApplication, QFileDialog, QMessageBox, QCheckBox, QHBoxLayout, QVBoxLayout, QWidget
 
 from PyQt5 import QtWidgets
 
-from PyQt5.QtCore import QAbstractTableModel, Qt
+from PyQt5.QtCore import QAbstractTableModel, Qt, QPoint
 
 from PyQt5.QtGui import QIcon
 
@@ -93,21 +95,31 @@ def capturarExcecao(exctype,value,tb):
 
     # Cria-se uma caixa de erro
     erro=QMessageBox()
+
+    # Por ser uma QMessageBox(), não haverá como
+    # aplicar redimentsionamento.
+    
     # Coloca-se o ícone da caixa como crítico
     erro.setIcon(QMessageBox.Critical)
+    
     # Insere o texto na caixa de erro
     erro.setText("Ocorreu um erro no aplicativo")
+    
     # E também insere o erro que aconteceu
     erro.setInformativeText(str(value))
+
     # Esse é o título que aparecerá na caixa,
     # No canto superior esquerdo da caixa
     erro.setWindowTitle("Erro")
+
     # Comando para adicionar um ícone ao canto superior
     # esquerdo da janela
     erro.setWindowIcon(QIcon(resource_path(r'icones\logoMillikan.ico')))
+    
     # E os detalhes do erro, como onde
     # ocorreu nas linhas de código
     erro.setDetailedText(mensagemErro)
+    
     # Comando para quando fechar a caixa, encerrar o programa
     erro.exec_()
 
@@ -177,15 +189,17 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.janelaAvaliacao.setupUi(self.janela_avaliacao)
 
         # Inicialização do objeto janela de edição
-        self.janela_edicao = QMainWindow()
+        self.janela_detalhes = QMainWindow()
 
-        self.janelaEdicao = Ui_MainWindowJanelaDetalhes()
+        self.janelaDetalhes = Ui_MainWindowJanelaDetalhes()
 
-        self.janelaEdicao.setupUi(self.janela_edicao)
+        self.janelaDetalhes.setupUi(self.janela_detalhes)
 
         # Estabelecimento de objetos já pré-existentes
 
         self.doubleSpinBox_voltagem.setEnabled(False)
+
+        self.imgInvertida = self.checkBoxImagemInvertida 
 
         self.progressBar = self.janelaExecucao.progressBarExecucao
 
@@ -193,12 +207,29 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.layout = self.janelaAvaliacao.gridLayout_Grafico
 
+        self.layoutDetalhes = self.janelaDetalhes.gridLayoutGrafico
+
+        self.checkBoxBarraErro = self.janelaAvaliacao.checkBoxBarraErro
+
+        self.checkBoxBarraErro.stateChanged.connect(self.exibirGraficoCarga_Raio)
+
         self.tabela = self.janelaAvaliacao.tabelaGotas
 
-        """
-            Lembrar que aqui eu devo no futuro colocar
-            os meios para permitir interagir com a tabela
-        """
+        self.tabela.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.tabela.customContextMenuRequested.connect(self.abrirMenuContexto)
+
+        self.dSpinBoxCargElemnt = self.janelaAvaliacao.doubleSpinBoxCargElement
+
+        self.dSpinBoxCargElemnt.valueChanged.connect(self.exibirGraficoCarga_Raio)
+
+        self.pushButtonSalvarVels = self.janelaAvaliacao.pushButtonBaixarVels
+
+        self.pushButtonSalvarVels.clicked.connect(self.escolherPastaSaveVelsGotas)
+
+        self.pushButtonSalvarDados = self.janelaAvaliacao.pushButtonBaixarDf
+
+        self.pushButtonSalvarDados.clicked.connect(self.escolherPastaSaveDadosGotas)
 
         ############
         ############
@@ -210,13 +241,15 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.pushButton_executar.clicked.connect(self.extrairVariaveis)
 
-        self.janelaExecucao.pushButtonCancelar.clicked.connect(self.cancelarOsCalculosFeitos)
-
         #############
         #############
         # ATRIBUTOS #
         #############
         #############
+
+        # Atributo para definir se o checkBox da
+        # janela de atribuição foi checkado ou não
+        #self.inverteu = 0
 
         # "Array 2D" que vai armazenar os caminhos de cada voltagem
         self.arrayArrayPaths = []
@@ -233,10 +266,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         self.arrArrArrsVelDesP_Vltgm = []
 
         # Array das arrays de velocidades desconsideradas
-        # que vão ser avaliadas pelo usuário
-        self.arrArrArrsVelSubP_VltgmNull = []
-
-        self.arrArrArrsVelDesP_VltgmNull = []
+        self.arrArrArrsVelP_VltgmNull = []
 
         # Array das arrays dos instantes correspondentes 
         # a essas velocidades de subida e descida
@@ -246,10 +276,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         # Array das arrays dos instantes correspondentes 
         # a essas velocidades desconsideradas
-        # que vão ser avaliadas pelo usuário
-        self.arrArrArrsVelDesP_VltgmNullInsts = []
-
-        self.arrArrArrsVelSubP_VltgmNullInsts = []
+        self.arrArrArrsVelP_VltgmNullInsts = []
 
         # Array de desvios padrões amostrais das velocidades 
         # de subida e descida
@@ -287,6 +314,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         # Array da estrutura dos checkboxes para considerar as gotas
         self.arrArrsCheckBoxesP_Vltgm = []
+
+        # Array para as gotas desconsideradas (O nome delas no caso)
+        self.arrayGotaNull = []
 
         # Esse dado vai ser somente utilizado como
         # modelo para tabela
@@ -349,18 +379,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             self.textEditCaminhoPasta.setText(diretorio)
 
             self.diretorio = diretorio
-
-            # Para fins de teste
-
-            #print(self.diretorio)
         
         else:
 
             self.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
-            
-            # Para fins de teste
-
-            #print(self.diretorio)
 
     def separarCaminhos(self, arrayCaminhosTxt):
 
@@ -430,10 +452,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
                 # para a voltagem
                 self.arrArrsNomFileP_Voltgm.append([])
 
-                # Adiciona a voltagem como forma de validação
-                # assim como foi feito anteriormente
-                self.arrArrsNomFileP_Voltgm[i].append(voltagem)
-
                 # Agora adiciona o nome à primeira array
                 self.arrArrsNomFileP_Voltgm[i].append(nomesArquivosTxtOrden[i])
             
@@ -502,8 +520,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                     self.arrArrsNomFileP_Voltgm[qtdVoltgs].append(nomesArquivosTxtOrden[i])
 
-                    self.arrArrsNomFileP_Voltgm[qtdVoltgs].append(nomesArquivosTxtOrden[i])
-
         self.arrayVoltagens = arrayVoltagens
 
     def lerDiretorio(self, diretorio):
@@ -522,14 +538,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.separarCaminhos(arrayCaminhosTxt)
 
-            quantilProgresso = 70/len(self.arrayVoltagens)
-
             for i in range(len(self.arrayVoltagens)):
 
-                self.executarCalculos(enderecoVoltagem=i, quantilProgresso=quantilProgresso)
-
-                quantilProgresso += quantilProgresso
-
+                self.executarCalculos(enderecoVoltagem=i)
+            
             self.prepararTabelaGrafico()
 
         else:
@@ -560,6 +572,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
                 self.distPlacs = distPlacs
 
+                #if self.imgInvertida.isChecked() == True:
+             
+                    #self.inverteu = 1
+
                 # Para fins de teste
 
                 #print(f"{voltagem}, {distPlacs}, {densGot}")
@@ -585,10 +601,10 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     def atualizar_progresso(self, valor, mensagem):
 
         # Altera o valor de porcentagem da barra
-        self.progressBar.setValue(valor)
+        self.progressBar.setValue(int(valor))
 
         # Altera o texto que acompanha
-        self.progressBar.setFormat(f"{mensagem} ({valor}%)")
+        self.progressBar.setFormat(f"{mensagem} ({int(valor)}%)")
 
         # Comando para atualização da UI em tempo real, 
         # sem ser feito somente ao fim
@@ -598,7 +614,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     # ele só será para estabelecimento inicial dos resultados e outros
     # métodos se encarregarão de editar esses dados inicialmente 
     # estabelecidos aqui
-    def executarCalculos(self, enderecoVoltagem, quantilProgresso):
+    def executarCalculos(self, enderecoVoltagem):
 
         # Processo para transicionar entre janelas
 
@@ -612,14 +628,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         # Fecha a anterior
         self.close()
+    
+        self.atualizar_progresso(10, f"Iniciando processamento para {self.arrayVoltagens[enderecoVoltagem]}V")
         
-        # Delays de 1s propositais
-        time.sleep(0.5)
-        
-        self.atualizar_progresso(0.1*quantilProgresso, "Iniciando processamento")
-        
-        time.sleep(0.5)
-
         # Vou fazer uma iteração global do algoritmo que é
         # regida pelo número de arquivos txt presentes na array.
         # da voltagem em análise
@@ -630,17 +641,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrArrArrsVelDesP_Vltgm.append([])
 
-        self.arrArrArrsVelSubP_VltgmNull.append([])
-
-        self.arrArrArrsVelDesP_VltgmNull.append([])
+        self.arrArrArrsVelP_VltgmNull.append([])
 
         self.arrArrArrsVelSubP_VltgmInsts.append([])
 
         self.arrArrArrsVelDesP_VltgmInsts.append([])
 
-        self.arrArrArrsVelSubP_VltgmNullInsts.append([])
-
-        self.arrArrArrsVelDesP_VltgmNullInsts.append([])
+        self.arrArrArrsVelP_VltgmNullInsts.append([])
 
         self.arrArrsDesvPadAmostVelSubP_Vltgm.append([])
 
@@ -670,29 +677,21 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.arrArrsCheckBoxesP_Vltgm.append([])
 
-        self.arrDfP_Vltgm.append([])
-
-        time.sleep(0.5)
+        self.arrDfP_Vltgm.append([]) 
         
-        self.atualizar_progresso(0.2*quantilProgresso, "Calculando as constantes")
+        self.atualizar_progresso(20, f"Calculando as constantes para {self.arrayVoltagens[enderecoVoltagem]}V")
         
-        time.sleep(0.5)
-
         # Configuração das constantes
         self.constante1 = (9/2)*(math.pi)*(self.distPlacs)*math.sqrt((self.viscosidadeAr**3)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
 
         self.constante2 = (3/2)*math.sqrt((self.viscosidadeAr)/(self.gravidade*(self.densGot-self.densidadeAr_p2)))
-
-        time.sleep(0.5)
-        
-        self.atualizar_progresso(0.3*quantilProgresso, "Iniciando Varredura")
-        
-        time.sleep(0.5)
+      
+        self.atualizar_progresso(30, f"Iniciando Varredura para {self.arrayVoltagens[enderecoVoltagem]}V")    
 
         # Definição padrão do alcance de varredura
         self.varredura = 5
 
-        for i in range(numeroDeRepeticoes):
+        for i in range(1,numeroDeRepeticoes,1):
 
             # Estabelecimento das arrays para a array recém adicionada
 
@@ -700,17 +699,13 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem].append([])
 
-            self.arrArrArrsVelSubP_VltgmNull[enderecoVoltagem].append([])
-
-            self.arrArrArrsVelDesP_VltgmNull[enderecoVoltagem].append([])
+            self.arrArrArrsVelP_VltgmNull[enderecoVoltagem].append([])
 
             self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem].append([])
 
             self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem].append([])
 
-            self.arrArrArrsVelSubP_VltgmNullInsts[enderecoVoltagem].append([])
-
-            self.arrArrArrsVelDesP_VltgmNullInsts[enderecoVoltagem].append([])
+            self.arrArrArrsVelP_VltgmNullInsts[enderecoVoltagem].append([])
 
             txtEmAnalise = self.arrayArrayPaths[enderecoVoltagem][i]
 
@@ -747,76 +742,94 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             #print(dataFrameVelocidades.dtypes)  
             #print(dataFrameVelocidades.head())
 
-            self.classificarVelocidades(dataFrameVelocidades, i)
+            self.classificarVelocidades(dataFrameVelocidades=dataFrameVelocidades, enderecoGota=(i-1), enderecoVoltagem=enderecoVoltagem)
 
             # Configuração inicial dos resultados 
             # para os conjuntos de velocidade, suas médias, 
             # seus desvios padrão amostrais e seus erros
-            desvioPadraoAmostralVelocidadeDescida = np.std(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i], ddof=1)
+            desvioPadraoAmostralVelocidadeDescida = np.std(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i-1], ddof=1)
 
-            desvioPadraoAmostralVelocidadeSubida = np.std(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i], ddof=1)
+            desvioPadraoAmostralVelocidadeSubida = np.std(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i-1], ddof=1)
 
             self.arrArrsDesvPadAmostVelSubP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeSubida)
 
             self.arrArrsDesvPadAmostVelDesP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeDescida)
 
-            self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i]))
+            self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i-1]))
 
-            self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i]))
+            self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem].append(np.mean(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i-1]))
 
-            self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i]))))
+            self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeDescida/(math.sqrt(len(self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i-1]))))
 
-            self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i]))))
+            self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem].append(desvioPadraoAmostralVelocidadeSubida/(math.sqrt(len(self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i-1]))))  
 
-        time.sleep(0.5)
-
-        self.atualizar_progresso(0.7*quantilProgresso, "Calculando os valores de carga e raio das gotas e seus erros")
-
-        time.sleep(0.5)
+        self.atualizar_progresso(40, f"Calculando os valores de carga e raio das gotas e seus erros para {self.arrayVoltagens[enderecoVoltagem]}V")   
 
         # Calculando as cargas, os raios e seus erros
-        for j in range(numeroDeRepeticoes):
+        for j in range(0,numeroDeRepeticoes-1,1):
 
-            # É necessário fazer dessa maneira pois colocar o .append no próprio
-            # método de cálculos do raio e carga é problemático. Já que esse método
-            # não vai ser utilizado só pelo método principal da janela de execução
-            self.arrArrsCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[0])
+            resultado = self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)
 
-            self.arrArrsRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[1])
+            if resultado is not None:
 
-            self.arrArrsErrCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[2])
+                # É necessário fazer dessa maneira pois colocar o .append no próprio
+                # método de cálculos do raio e carga é problemático.
+                self.arrArrsCargasP_Vltgm[enderecoVoltagem].append(resultado[0])
 
-            self.arrArrsErrRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[3])
+                self.arrArrsRaiosP_Vltgm[enderecoVoltagem].append(resultado[1])
 
-            self.arrArrsPorctErrCargasP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[4])
+                self.arrArrsErrCargasP_Vltgm[enderecoVoltagem].append(resultado[2])
 
-            self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem].append(self.calcularCargaRaioGota(enderecoVoltagem=enderecoVoltagem, enderecoGota=j)[5])
+                self.arrArrsErrRaiosP_Vltgm[enderecoVoltagem].append(resultado[3])
 
-        time.sleep(0.5)
+                self.arrArrsPorctErrCargasP_Vltgm[enderecoVoltagem].append(resultado[4])
 
-        self.atualizar_progresso(0.8*quantilProgresso, "Classificando as gotas")
+                self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem].append(resultado[5])
 
-        time.sleep(0.5)
+        self.arrayArrayPaths[enderecoVoltagem] = [item for item in self.arrayArrayPaths[enderecoVoltagem] if item != None]
 
-        for k in range(numeroDeRepeticoes):
+        self.arrArrsNomFileP_Voltgm[enderecoVoltagem] = [item for item in self.arrArrsNomFileP_Voltgm[enderecoVoltagem] if item != None]
 
-            self.arrArrsClassifGotP_Vltgm.append(self.classificarGota(enderecoGota=k, enderecoVoltagem=enderecoVoltagem))
+        self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem] if item != None]
 
-        time.sleep(0.5)
+        self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem] if item != None]
 
-        self.atualizar_progresso(0.9*quantilProgresso, "Criando e configurando os check-boxes")
+        self.arrArrArrsVelP_VltgmNull[enderecoVoltagem] = [item for item in self.arrArrArrsVelP_VltgmNull[enderecoVoltagem] if item != None]
 
-        time.sleep(0.5)
+        self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem] = [item for item in self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem] if item != None]
 
-        for l in range(numeroDeRepeticoes):
+        self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem] = [item for item in self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem] if item != None]
 
-            self.arrArrsCheckBoxesP_Vltgm.append(self.criarCheckBoxes(enderecoCheckBox=j, enderecoVoltagem=enderecoVoltagem))
+        self.arrArrArrsVelP_VltgmNullInsts[enderecoVoltagem] = [item for item in self.arrArrArrsVelP_VltgmNullInsts[enderecoVoltagem] if item != None]
 
-        time.sleep(0.5)
+        self.arrArrsDesvPadAmostVelSubP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsDesvPadAmostVelSubP_Vltgm[enderecoVoltagem] if item != None]
 
-        self.atualizar_progresso(1*quantilProgresso, "Criando os dataframes de dados")
+        self.arrArrsDesvPadAmostVelDesP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsDesvPadAmostVelDesP_Vltgm[enderecoVoltagem] if item != None]
 
-        time.sleep(0.5)
+        self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem] if item != None]
+
+        self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem] if item != None]
+
+        self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem] if item != None]
+
+        self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem] = [item for item in self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem] if item != None]
+
+        self.atualizar_progresso(50, f"Classificando as gotas para {self.arrayVoltagens[enderecoVoltagem]}V")
+
+        # Atualiza o número de repetições
+        numeroDeRepeticoes = len(self.arrayArrayPaths[enderecoVoltagem])
+
+        for k in range(numeroDeRepeticoes-1):
+
+            self.arrArrsClassifGotP_Vltgm[enderecoVoltagem].append(self.classificarGota(enderecoGota=k, enderecoVoltagem=enderecoVoltagem))
+
+        self.atualizar_progresso(60, f"Criando e configurando os check-boxes para {self.arrayVoltagens[enderecoVoltagem]}V")
+
+        for l in range(numeroDeRepeticoes-1):
+
+            self.arrArrsCheckBoxesP_Vltgm[enderecoVoltagem].append(self.criarCheckBoxes(enderecoCheckBox=l, enderecoVoltagem=enderecoVoltagem))
+
+        self.atualizar_progresso(70, f"Criando os dataframes de dados para {self.arrayVoltagens[enderecoVoltagem]}V")
 
         baseParaDf = {
             "Nome da gota": self.arrArrsNomFileP_Voltgm[enderecoVoltagem],
@@ -827,15 +840,109 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             "Erro relativo (%) (m)": [x * 100 for x in self.arrArrsPorctErrRaiosP_Vltgm[enderecoVoltagem]]
         }
 
-        self.arrDfP_Vltgm[enderecoVoltagem] =pd.DataFrame(baseParaDf)
+        self.arrDfP_Vltgm[enderecoVoltagem] = pd.DataFrame(baseParaDf)
+
+    # Métodos de cálculo de carga e raio de dada gota i
+    def calcularCargaRaioGota(self, enderecoVoltagem, enderecoGota):
+
+        velDes = self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
+
+        velSub = self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
+
+        constante1 = self.constante1
+
+        constante2 = self.constante2
+
+        voltagem = self.arrayVoltagens[enderecoVoltagem]
+        
+        soma = abs(velDes) + abs(velSub)
+
+        diferenca = abs(velDes) - abs(velSub)
+
+        if self.imgInvertida.isChecked() == True:
+
+            diferenca = abs(velSub) - abs(velDes)
+
+        desvPadAmostMediaVelDes = self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
+
+        desvPadAmostMediaVelSub = self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
+
+        resultados = []
+
+        # Se a velocidade de subida está maior que a
+        # de descida e não seja uma imagem invertida,
+        # pode ser entrada de ar.
+        if diferenca < 0:
+
+            self.arrayGotaNull.append(self.arrArrsNomFileP_Voltgm[enderecoVoltagem][enderecoGota])
+
+            self.arrayArrayPaths[enderecoVoltagem][enderecoGota+1] = None
+
+            self.arrArrsNomFileP_Voltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelP_VltgmNull[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrArrsVelP_VltgmNullInsts[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsDesvPadAmostVelSubP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsDesvPadAmostVelDesP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota] = None
+
+            return None
+
+        razao = (constante1)/(2*voltagem)
+
+        primeiraParte = 2*razao*math.sqrt(diferenca)
+
+        segundaParte = (soma*razao)/(math.sqrt(diferenca))
+
+        carga = 2*razao*soma*math.sqrt(diferenca)
+
+        erroCarga = (abs(primeiraParte+segundaParte)*desvPadAmostMediaVelDes)+(abs(primeiraParte-segundaParte)*desvPadAmostMediaVelSub)
+
+        raio = constante2*math.sqrt(diferenca)
+
+        parteAbs = (constante2)/(2*math.sqrt(diferenca))
+
+        erroRaio = (abs(parteAbs)*desvPadAmostMediaVelDes)+(abs(-parteAbs)*desvPadAmostMediaVelSub)
+
+        # Todos os resultados são colocados em uma array, onde
+        # por sua vez essa array é retornada e a depender do que
+        # é necessitado, o índice é explicitado para garantir que 
+        # vá vir só o resultado necessário do conjunto
+        resultados.append(carga) # índice 0
+
+        resultados.append(raio) # índice 1
+
+        resultados.append(erroCarga) # índice 2
+
+        resultados.append(erroRaio) # índice 3
+
+        resultados.append(erroCarga/carga) # índice 4
+
+        resultados.append(erroRaio/raio) # índice 5
+
+        return resultados
 
     def prepararTabelaGrafico(self):
 
-        time.sleep(0.5)
-
         self.atualizar_progresso(80, "Preparando para dispor os resultados em uma tabela")
-
-        time.sleep(0.5)
 
         arrayGeralNomes = []
 
@@ -878,13 +985,9 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.tabela.setModel(self.modelo)
 
-        self.modelo.layoutChanged.emit()
-
-        time.sleep(0.5)
+        self.modelo.layoutChanged.emit()       
         
-        self.atualizar_progresso(90, "Preparando o gráfico para visualização")
-        
-        time.sleep(0.5)
+        self.atualizar_progresso(90, "Preparando o gráfico para visualização")  
 
         self.canvas = FigureCanvas(Figure(figsize=(5,4)))
 
@@ -892,11 +995,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.toolbar = NavigationToolBar(self.canvas, self)
 
-        time.sleep(0.5)
-
-        self.atualizar_progresso(100, "Completo")
-        
-        time.sleep(0.5)
+        self.atualizar_progresso(100, "Completo")   
 
         self.janela_execucao.hide()
 
@@ -908,94 +1007,19 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.exibirGraficoCarga_Raio()
 
-    # Método de reincinialização do programa
-    # antes da finalização dos cálculos iniciais
-    def cancelarOsCalculosFeitos(self):
+        if len(self.arrayGotaNull) > 0:
 
-        # Precisa limpar as arrays e abrir novamente 
-        # a janela principal fechando a de executar 
-        # voltando ao estado inicial
-        self.arrayArrayPaths = []
+            gotas = ''
 
-        self.arrayVoltagens = []
+            for j in range(len(self.arrayGotaNull)):
 
-        self.arrArrsNomFileP_Voltgm = []
+                gotas += f'{self.arrayGotaNull[j]},\n'
 
-        self.arrArrArrsVelSubP_Vltgm = []
+                if j == (len(self.arrayGotaNull)-1):
 
-        self.arrArrArrsVelDesP_Vltgm = []
+                    gotas += f'{self.arrayGotaNull[j]}'
 
-        self.arrArrArrsVelSubP_VltgmNull = []
-
-        self.arrArrArrsVelDesP_VltgmNull = []
-
-        self.arrArrArrsVelSubP_VltgmInsts = []
-
-        self.arrArrArrsVelDesP_VltgmInsts = []
-
-        self.arrArrArrsVelDesP_VltgmNullInsts = []
-
-        self.arrArrArrsVelSubP_VltgmNullInsts = []
-
-        self.arrArrsDesvPadAmostVelSubP_Vltgm = []
-
-        self.arrArrsDesvPadAmostVelDesP_Vltgm = []
-
-        self.arrArrsMedVelSubP_Vltgm = []
-
-        self.arrArrsMedVelDesP_Vltgm = []
-
-        self.arrArrsDesvPadAmostMedVelDesP_Vltgm = []
-
-        self.arrArrsDesvPadAmostMedVelSubP_Vltgm = []
-
-        self.arrArrsCargasP_Vltgm = []
-
-        self.arrArrsErrCargasP_Vltgm = []
-
-        self.arrArrsPorctErrCargasP_Vltgm = []
-
-        self.arrArrsRaiosP_Vltgm = []
-
-        self.arrArrsErrRaiosP_Vltgm = []
-
-        self.arrArrsPorctErrRaiosP_Vltgm = []
-
-        self.arrArrsClassifGotP_Vltgm = []
-
-        self.arrArrsCheckBoxesP_Vltgm = []
-
-        self.dataFrameTabela = None
-
-        self.arrDfP_Vltgm = []
-
-        self.diretorio = None
-
-        self.densGot = None
-
-        self.distPlacs = None
-
-        self.varredura = 5
-
-        self.constante1 = None
-
-        self.constante2 = None
-
-        self.viscosidadeAr = 1.82 * 10**(-5)
-
-        self.gravidade = 9.80665
-
-        self.densidadeAr_p2 = 1.293
-
-        self.janelaAtribuicao.textEditCaminhoPasta.setText("O caminho da pasta aparecerá aqui quando selecionada")
-
-        self.janela_execucao.hide()
-
-        self.janela_atribuicao.show()
-
-        self.janela_atribuicao.setWindowIcon(QIcon(resource_path(r"icones/logoMillikan.ico")))
-
-        self.janela_execucao.close()
+            QMessageBox.warning(self,"Aviso",f"As gotas:\n{gotas}\nforam excluídas da análise devido\nao critério de desclassificação.\n Saiba mais esse critério no manual do\nsoftware.")
 
     def criarCheckBoxes(self, enderecoCheckBox, enderecoVoltagem):
 
@@ -1003,7 +1027,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         self.janelaAvaliacao.checkBox.setObjectName(f'chechbox{enderecoCheckBox}Voltagem{enderecoVoltagem}')
 
-        self.janelaAvaliacao.checkBox.setText(f'{self.arrayNomesArquivos[enderecoVoltagem][enderecoCheckBox]}')
+        self.janelaAvaliacao.checkBox.setText(f'{self.arrArrsNomFileP_Voltgm[enderecoVoltagem][enderecoCheckBox]}')
 
         self.janelaAvaliacao.checkBox.stateChanged.connect(self.exibirGraficoCarga_Raio)
 
@@ -1017,7 +1041,79 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     ########################
     ########################
 
-    def alterarVisibilidadeGota(self):
+    # Método responsável pela exibição/
+    # atualização do gráfico carga x raio
+    def exibirGraficoCarga_Raio(self):
+
+        cores = list(mcolors.BASE_COLORS.keys())
+
+        cores = [cor for cor in cores if cor not in ['k']]
+
+        if hasattr(self, 'canvas'):
+
+            pass
+
+        else:
+
+            self.canvas = FigureCanvas(Figure(figsize=(5,4)))
+            self.ax = self.canvas.figure.add_subplot(111)
+
+        if hasattr(self, 'ax'):
+
+            self.ax.clear()
+
+        else:
+
+            self.canvas = FigureCanvas(Figure(figsize=(5,4)))
+            self.ax = self.canvas.figure.add_subplot(111)
+
+        if self.checkBoxBarraErro.isChecked() == True:
+
+            # Note que aqui utiliza a ideia
+            # de retornar uma array. O elemento de 
+            # endereço 0 retorna a array de cargas 
+            # e o endereço 2 retorna a array de raios
+            for i in range(len(self.arrayVoltagens)):
+                
+                self.ax.errorbar(self.alterarVisibilidadeGota(enderecoVoltagem=i)[2], self.alterarVisibilidadeGota(enderecoVoltagem=i)[0], xerr=self.alterarVisibilidadeGota(enderecoVoltagem=i)[3], yerr=self.alterarVisibilidadeGota(enderecoVoltagem=i)[1], label=f'{self.arrayVoltagens[i]} V', color=cores[i % len(cores)],fmt="x", markersize=10, capsize=5)
+
+        else:
+
+            for j in range(len(self.arrayVoltagens)):
+                
+                self.ax.scatter(self.alterarVisibilidadeGota(enderecoVoltagem=j)[2], self.alterarVisibilidadeGota(enderecoVoltagem=j)[0], label=f'{self.arrayVoltagens[j]} V', color=cores[j % len(cores)], marker="x", s=100)
+
+        for k in self.aplicarMultiploCargaElementar(valCargElmnt=self.dSpinBoxCargElemnt.value()):
+
+            self.ax.axhline(y=k, color="black", linestyle='-', linewidth=2.5)
+
+        # Aumentando a grossura das bordas do gráfico
+        self.ax.spines['top'].set_linewidth(2)
+        self.ax.spines['bottom'].set_linewidth(2)
+        self.ax.spines['left'].set_linewidth(2)
+        self.ax.spines['right'].set_linewidth(2)
+
+        # Aumentando a fonte dos números dos eixos
+        self.ax.tick_params(axis='both', labelsize=14)
+
+        # Colocando os títulos nos eixos
+        self.ax.set_xlabel("Raio (m)", fontsize=14)
+
+        self.ax.set_ylabel("Carga (C)", fontsize=14)
+
+        self.ax.legend(fontsize=12)
+
+        self.canvas.draw()
+
+        if not hasattr(self, 'toolbar'):
+
+            self.toolbar = NavigationToolBar(self.canvas, self)
+
+        self.layout.addWidget(self.toolbar)
+
+        self.layout.addWidget(self.canvas)
+
+    def alterarVisibilidadeGota(self, enderecoVoltagem):
 
         # Arrays temporárias para
         # carga, raio e seus erros
@@ -1031,7 +1127,7 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
         resultados = [arrayCargasTemp, arrayCargasErrTemp, arrayRaiosTemp, arrayRaiosErrTemp]
 
-        numeroDeRepeticoes = len(self.arrArrsCargasP_Vltgm)
+        numeroDeRepeticoes = len(self.arrArrsCargasP_Vltgm[enderecoVoltagem])
 
         for i in range(numeroDeRepeticoes):
 
@@ -1041,26 +1137,384 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             # o append dessas informações é pulado
             # e a array temporária só vai ter as
             # gotas que estão checkadas
-            if self.arrArrsCheckBoxesP_Vltgm[i].isChecked() == True:
+            if self.arrArrsCheckBoxesP_Vltgm[enderecoVoltagem][i].isChecked() == True:
 
                 continue
 
-            arrayCargasTemp.append(self.arrArrsCargasP_Vltgm[i])
+            arrayCargasTemp.append(self.arrArrsCargasP_Vltgm[enderecoVoltagem][i])
 
-            arrayRaiosTemp.append(self.arrArrsRaiosP_Vltgm[i])
+            arrayRaiosTemp.append(self.arrArrsRaiosP_Vltgm[enderecoVoltagem][i])
 
-            arrayCargasErrTemp.append(self.arrArrsErrCargasP_Vltgm[i])
+            arrayCargasErrTemp.append(self.arrArrsErrCargasP_Vltgm[enderecoVoltagem][i])
 
-            arrayRaiosErrTemp.append(self.arrArrsErrRaiosP_Vltgm[i])
+            arrayRaiosErrTemp.append(self.arrArrsErrRaiosP_Vltgm[enderecoVoltagem][i])
 
         # Essas arrays são requisitadas no plot em si
         return resultados
+    
+    def aplicarMultiploCargaElementar(self, valCargElmnt):
+
+        valCargElmnt *= 10**(-19)
+        # Determinando os mínimos e máximos globais de raio
+        # e carga a partir do dataFrame geral
+        menorCarga = self.dataFrameTabela.iloc[:,2].min()
+
+        maiorCarga = self.dataFrameTabela.iloc[:,2].max()
+
+        arrayMultplsCarg = []
+
+        for i in range(1,1001,1):
+
+            multiplovalCargElmnt = valCargElmnt * i
+            arrayMultplsCarg.append(multiplovalCargElmnt)
+
+        arrayMultplsCarg = [item for item in arrayMultplsCarg if menorCarga <= item <= maiorCarga]
+
+        return arrayMultplsCarg
+
+    def escolherPastaSaveVelsGotas(self):
+
+        nomePasta = None
+
+        opcoes = QFileDialog.Options()
+
+        nomePasta = QFileDialog.getExistingDirectory(
+            self,
+            "Escolha a pasta para salvar as planilhas de velocidades",
+            "",
+            options=opcoes
+            )
+
+        if nomePasta:
+
+            self.salvarVelocidades(nomePasta)
+
+        else:
+
+            QMessageBox.information(
+                self, 
+                "Você não salvou os dados de velocidade", "Os dados de velocidade não foram salvos."
+                )
+            
+    def salvarVelocidades(self, nomePasta):
+
+        numPastasVltgns = len(self.arrayVoltagens)
+
+        arrArrArrsDfsVels = []
+
+        # Vamos adicionar as voltagens primeiro
+        for i in range(numPastasVltgns):
+
+            arrArrArrsDfsVels.append([])
+
+            # E agora o número de gotas que tem nessa voltagem
+            # Tanto faz se for arrArrArrsVelDesP_Vltgm ou 
+            # arrArrArrsSubDesP_Vltgm
+            numGotas = len(self.arrArrArrsVelDesP_Vltgm[i])
+            
+            for j in range(numGotas):
+
+                arrArrArrsDfsVels[i].append([])
+
+        # Agora em cada gota deve ser coletado os arrays
+        # de velocidades e instantes
+        for k in range(numPastasVltgns):
+            
+            numGotas = len(self.arrArrArrsVelDesP_Vltgm[k])
+
+            for l in range(numGotas):
+
+                dfSubida = None
+
+                dfDescida = None
+
+                dfNull = None
+
+                # Começando pela velocidade de subida
+
+                dadosSubida = {
+                    "Velocidade de subida (m/s)": self.arrArrArrsVelSubP_Vltgm[k][l],
+                    "Instante (s)": self.arrArrArrsVelSubP_VltgmInsts[k][l]
+                }
+
+                dfSubida = pd.DataFrame(dadosSubida)
+
+                arrArrArrsDfsVels[k][l].append(dfSubida)
+
+                dadosDescida = {
+                    "Velocidade de descida (m/s)": self.arrArrArrsVelDesP_Vltgm[k][l],
+                    "Instante (s)": self.arrArrArrsVelDesP_VltgmInsts[k][l]
+                }
+
+                dfDescida = pd.DataFrame(dadosDescida)
+
+                arrArrArrsDfsVels[k][l].append(dfDescida)
+
+                dadosNull = {
+                    "Velocidade desconsiderada (m/s)": self.arrArrArrsVelP_VltgmNull[k][l],
+                    "Instante (s)": self.arrArrArrsVelP_VltgmNullInsts[k][l]
+                }
+
+                dfNull = pd.DataFrame(dadosNull)
+
+                arrArrArrsDfsVels[k][l].append(dfNull)
+
+        caminhos = []
+
+        for m in range(numPastasVltgns):
+
+            subPastaVltgm = f"{self.arrayVoltagens[m]}"
+
+            caminho = os.path.join("resultsVelocidades", subPastaVltgm)
+
+            caminhos.append(caminho)
+
+        for n in range(numPastasVltgns):
+
+            CAMINHO = os.path.join(nomePasta, caminhos[n])
+
+            os.makedirs(CAMINHO, exist_ok=True)
+
+            # Restringe ao número de gotas como assim foi feito
+            # anteriormente no laço de repetição j desse método
+            for o in range(len(self.arrArrArrsVelDesP_Vltgm[n])):
+                
+                # Aqui eu adiciono o nome do arquivo .xlsx
+                # Como os dados são organizados concomitantemente
+                # os índices n e o valerão para
+                # arrArrsNomFileP_Voltgm e o método corrigirSheetNames
+                # vai preparar ele apropriadamente tirando caracteres inválidos
+                # e adicionando a terminação .xlsx
+                caminhoArquivo = os.path.join(CAMINHO, self.corrigirSheetNames(self.arrArrsNomFileP_Voltgm[n][o]))
+
+                with pd.ExcelWriter(caminhoArquivo) as writer:
+                    
+                    # E agora a distinção por aba:
+                    # Onde o nome da aba é padronizado
+                    # seguindo a ordem 1) velsSub, 2)
+                    # velsDes, 3) velsDesconsidrds
+                    for p in range(3):
+
+                        if p == 0:
+
+                            nomeAba = 'velsSub'
+
+                            arrArrArrsDfsVels[n][o][p].to_excel(writer, sheet_name=nomeAba, index=False)
+
+                        elif p == 1:
+
+                            nomeAba = 'velsDes'
+
+                            arrArrArrsDfsVels[n][o][p].to_excel(writer, sheet_name=nomeAba, index=False)
+
+                        else:
+
+                            nomeAba = 'velsDesconsidrds'
+
+                            arrArrArrsDfsVels[n][o][p].to_excel(writer, sheet_name=nomeAba, index=False)
+
+    def escolherPastaSaveDadosGotas(self):
+
+        nomeArquivo = None
+
+        opcoes = QFileDialog.Options()
+
+        filtroDeArquivo = "Excel Files (*.xlsx);;All Files (*)"
+
+        nomeArquivo, _ = QFileDialog.getSaveFileName(
+            self,
+            "Escolha a pasta para salvar a planilha de dados",
+            "",
+            filtroDeArquivo,
+            options=opcoes
+            )
+
+        if nomeArquivo:
+
+            if not nomeArquivo.endswith('.xlsx'):
+
+                nomeArquivo += '.xlsx'
+
+            self.salvarTabela(nomeArquivo)
+
+        else:
+
+            QMessageBox.information(
+                self, 
+                "Você não salvou a planilha de dados", "Os dados da tabela não foram salvos."
+                )
+            
+    def salvarTabela(self, nomeArquivo):
+
+        numVltgns = len(self.arrayVoltagens)
+
+        with pd.ExcelWriter(nomeArquivo) as writer2:
+
+            for i in range(numVltgns):
+
+                self.arrDfP_Vltgm[i].to_excel(writer2, sheet_name=str(self.arrayVoltagens[i]), index=False)
+
+    def corrigirSheetNames(self, nomePlanilha):
+        
+        # Array de caracteres inválidos
+        chars_invalidos = ['\\', '/', '*', '[', ']', ':', '?', "'", '"', '<', '>', '|']
+        
+        # Laço de repetição analisando cada caractere do 
+        # nomeSheet comparando com os caracteres inválidos
+        for char in chars_invalidos:
+            
+            # Onde caso ocorra presença de algum caractere do   
+            # tipo inválido deve haver reposição pelo caractere _
+            nomePlanilha = nomePlanilha.replace(char, '_')
+        
+        # Verificando se o número de caracteres excede 31
+        if len(nomePlanilha) > 31:
+            
+            # Se sim, restringir aos 31 caracteres
+            nomePlanilha = nomePlanilha[:31]
+
+        if not nomePlanilha.endswith('.xlsx'):
+
+            nomePlanilha += '.xlsx'
+        
+        return nomePlanilha.strip()
 
     #####################
     #####################
     # MÉTODOS DE EDIÇÃO #
     #####################
     #####################
+
+    def abrirMenuContexto(self, position: QPoint):
+
+        index = self.tabela.indexAt(position)
+
+        if not index.isValid():
+
+            return
+        
+        row = index.row()
+
+        menu = QMenu(self)
+
+        acaoAbrirDetalhes = menu.addAction("Ver a varredura de velocidades")
+
+        action = menu.exec_(self.tabela.viewport().mapToGlobal(position))
+
+        if action == acaoAbrirDetalhes:
+
+            if 0 <= row < self.modelo._data.shape[0]:
+
+                self.janela_detalhes.show()
+
+                # Caso esteja minimizada ativamente,
+                # esse comando garante que ele mude seu estado
+                # para ativo antes de utilizar o raise_()
+                self.janela_detalhes.setWindowState(
+                    self.janela_detalhes.windowState() & ~Qt.WindowMinimized | Qt.WindowActive
+                )
+
+                self.janela_detalhes.raise_()
+
+                self.janela_detalhes.setWindowIcon(QIcon(resource_path(r'icones\logoMillikan.ico')))
+
+                indiceVoltagem = self.arrayVoltagens.index(int(self.dataFrameTabela.iloc[row,0][:3]))
+
+                indiceGota = self.arrArrsNomFileP_Voltgm[indiceVoltagem].index(self.dataFrameTabela.iloc[row,0])
+
+                arrVelsSubida = self.arrArrArrsVelSubP_Vltgm[indiceVoltagem][indiceGota]
+
+                arrVelsSubidaInsts = self.arrArrArrsVelSubP_VltgmInsts[indiceVoltagem][indiceGota]
+
+                arrVelsDescida = self.arrArrArrsVelDesP_Vltgm[indiceVoltagem][indiceGota]
+
+                arrVelsDescidaInsts = self.arrArrArrsVelDesP_VltgmInsts[indiceVoltagem][indiceGota]
+
+                arrVelNull = self.arrArrArrsVelP_VltgmNull[indiceVoltagem][indiceGota]
+                
+                arrVelNullInsts = self.arrArrArrsVelP_VltgmNullInsts[indiceVoltagem][indiceGota]
+
+                unificacaoVel = []
+
+                unificacaoVel += arrVelsSubida
+
+                unificacaoVel += arrVelsDescida
+
+                unificacaoVel += arrVelNull
+
+                unificacaoInsts = []
+
+                unificacaoInsts += arrVelsSubidaInsts
+
+                unificacaoInsts += arrVelsDescidaInsts
+
+                unificacaoInsts += arrVelNullInsts
+
+                self.exibirGraficoVelocidades(arrVelNull=arrVelNull, arrVelNullInsts=arrVelNullInsts, arrVelsDescida=arrVelsDescida, arrVelsDescidaInsts=arrVelsDescidaInsts, arrVelsSubida=arrVelsSubida, arrVelsSubidaInsts=arrVelsSubidaInsts, unificacaoVel=unificacaoVel, unificacaoInsts=unificacaoInsts, row=row)
+
+            else:
+
+                raise ValueError(f"A linha {row} é inválida.")
+            
+    def exibirGraficoVelocidades(self, arrVelNull, arrVelNullInsts, arrVelsDescida, arrVelsDescidaInsts, arrVelsSubida, arrVelsSubidaInsts, unificacaoVel, unificacaoInsts, row):
+
+        if hasattr(self, 'canvasDetalhes'):
+
+            self.layoutDetalhes.removeWidget(self.canvasDetalhes)
+
+            self.canvasDetalhes.setParent(None)
+
+            del self.axDetalhes
+
+            del self.canvasDetalhes
+
+            self.canvasDetalhes = None
+
+        if hasattr(self, 'toolbarDetalhes'):
+
+            self.layoutDetalhes.removeWidget(self.toolbarDetalhes)
+
+            self.toolbarDetalhes.setParent(None)
+
+            del self.toolbarDetalhes
+
+            self.toolbarDetalhes = None
+
+        self.canvasDetalhes = FigureCanvas(Figure(figsize=(5,4)))
+
+        self.axDetalhes = self.canvasDetalhes.figure.add_subplot(111)
+
+        self.toolbarDetalhes = NavigationToolBar(self.canvasDetalhes, self)
+
+        self.axDetalhes.scatter(arrVelsSubidaInsts, arrVelsSubida, color="red", marker='o', label='Velocidade de subida')
+
+        self.axDetalhes.scatter(arrVelsDescidaInsts, arrVelsDescida, color="blue", marker='o', label='Velocidade de descida')
+
+        self.axDetalhes.scatter(arrVelNullInsts, arrVelNull, color='gray', marker='o', label='Velocidade desconsiderada')
+
+        self.axDetalhes.spines['top'].set_linewidth(2)
+
+        self.axDetalhes.spines['bottom'].set_linewidth(2)
+
+        self.axDetalhes.spines['left'].set_linewidth(2)
+
+        self.axDetalhes.spines['right'].set_linewidth(2)
+
+        self.axDetalhes.tick_params(axis='both', labelsize=14)
+
+        self.axDetalhes.set_xlabel('Instante (s)', fontsize=14)
+
+        self.axDetalhes.set_ylabel('Velocidade vertical (m/s)', fontsize=14)
+
+        self.axDetalhes.set_title(f'Varredura de velocidades da gota {self.dataFrameTabela.iloc[row,0]}')
+
+        self.axDetalhes.legend(fontsize=12)
+
+        self.canvasDetalhes.draw()
+
+        self.layoutDetalhes.addWidget(self.toolbarDetalhes)
+
+        self.layoutDetalhes.addWidget(self.canvasDetalhes)
 
     #####################
     #####################
@@ -1069,34 +1523,30 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
     #####################
 
     # Classificar as velocidades de dada gota i
-    def classificarVelocidades(self, dataFrameVelocidades, indice_i):
+    def classificarVelocidades(self, dataFrameVelocidades, enderecoGota, enderecoVoltagem):
 
-        i = indice_i
+        i = enderecoGota
 
         # Retorna o número de linhas
         quantidadeLinhas = dataFrameVelocidades.shape[0]
 
         def atribuicaoVelocidadeDescida():
 
-            self.arrArrArrsVelDesP_Vltgm[i].append(velocidade)
-            # Tem que se repensar esses appends caso eu
-            # deseje possibilitar que o usuário faça a varredura
-            """Sinceramente, acho que não seja necessário"""
-            self.arrArrArrsVelDesP_VltgmInstantes[i].append(instante)
+            self.arrArrArrsVelDesP_Vltgm[enderecoVoltagem][i].append(velocidade)
+            
+            self.arrArrArrsVelDesP_VltgmInsts[enderecoVoltagem][i].append(instante)
 
         def atribuicaoVelocidadeSubida():
 
-            self.arrArrArrsVelSubP_Vltgm[i].append(velocidade)
-            # Tem que se repensar esses appends caso eu
-            # deseje possibilitar que o usuário faça a varredura
-            """Sinceramente, acho que não seja necessário"""
-            self.arrArrArrsVelSubP_VltgmInstantes[i].append(instante)
+            self.arrArrArrsVelSubP_Vltgm[enderecoVoltagem][i].append(velocidade)
+        
+            self.arrArrArrsVelSubP_VltgmInsts[enderecoVoltagem][i].append(instante)
 
         def atribuirVelocidadeDesconsiderada():
 
-            self.arrArrArrsVelSubP_VltgmNull[i].append(velocidade)
+            self.arrArrArrsVelP_VltgmNull[enderecoVoltagem][i].append(velocidade)
             
-            self.arrArrArrsVelDesP_VltgmconsInsts[i].append(instante)
+            self.arrArrArrsVelP_VltgmNullInsts[enderecoVoltagem][i].append(instante)
 
         for j in range(quantidadeLinhas):
 
@@ -1106,7 +1556,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
 
             # Primeiro, vamos descobrir se o ponto analisado 
             # vai estar em um dos extremos ou no meio
-
             if j == 0:
                 
                 Pontuacao = self.varrerDianteira(dataFrameVelocidades, quantidadeLinhas, j)
@@ -1236,76 +1685,6 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
             ponto += 0
 
         return ponto
-
-    # Métodos de cálculo de carga e raio de dada gota i
-    def calcularCargaRaioGota(self, enderecoVoltagem, enderecoGota):
-
-        velDes = self.arrArrsMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
-
-        velSub = self.arrArrsMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
-
-        constante1 = self.constante1
-
-        constante2 = self.constante2
-
-        voltagem = self.voltagem
-        
-        soma = abs(velDes) + abs(velSub)
-
-        diferenca = abs(velDes) - abs(velSub)
-
-        desvPadAmostMediaVelDes = self.arrArrsDesvPadAmostMedVelDesP_Vltgm[enderecoVoltagem][enderecoGota]
-
-        desvPadAmostMediaVelSub = self.arrArrsDesvPadAmostMedVelSubP_Vltgm[enderecoVoltagem][enderecoGota]
-
-        resultados = []
-
-        # Por vezes, aparentemente há gravações que são 
-        # feitas além da distância focal
-        # da lente, quando isso ocorre a imagem é invertida
-        # e o que parece uma gota subindo na verdade é ela caindo.
-        # Quem vai atestar bem isso é o fato da velocidade de subida
-        # ser maior que a de descida e nesse caso a difença acima irá
-        # ser negativa, para corrigir erros de raiz quadrada negativa
-        # o melhor é simplesmente inverter a posição dos termos em
-        # caso de diferença negativa
-        if diferenca < 0:
-
-            diferenca = abs(velSub) - abs(velDes)
-
-        razao = (constante1)/(2*voltagem)
-
-        primeiraParte = 2*razao*math.sqrt(diferenca)
-
-        segundaParte = (soma*razao)/(math.sqrt(diferenca))
-
-        carga = 2*razao*soma*math.sqrt(diferenca)
-
-        erroCarga = (abs(primeiraParte+segundaParte)*desvPadAmostMediaVelDes)+(abs(primeiraParte-segundaParte)*desvPadAmostMediaVelSub)
-
-        raio = constante2*math.sqrt(diferenca)
-
-        parteAbs = (constante2)/(2*math.sqrt(diferenca))
-
-        erroRaio = (abs(parteAbs)*desvPadAmostMediaVelDes)+(abs(-parteAbs)*desvPadAmostMediaVelSub)
-
-        # Todos os resultados são colocados em uma array, onde
-        # por sua vez essa array é retornada e a depender do que
-        # é necessitado, o índice é explicitado para garantir que 
-        # vá vir só o resultado necessário do conjunto
-        resultados.append(carga) # índice 0
-
-        resultados.append(raio) # índice 1
-
-        resultados.append(erroCarga) # índice 2
-
-        resultados.append(erroRaio) # índice 3
-
-        resultados.append(erroCarga/carga) # índice 4
-
-        resultados.append(erroRaio/raio) # índice 5
-
-        return resultados
     
     # Método de classificação de dada gota i
     def classificarGota(self, enderecoGota, enderecoVoltagem):
@@ -1326,135 +1705,14 @@ class MainWindow(QMainWindow, Ui_janelaAtribuicao):
         # de 20 itens, é uma gota confiável
         else:
 
-            return "Confiável"   
-        
-    # Método responsável pela exibição/
-    # atualização do gráfico carga x raio
-    def exibirGraficoCarga_Raio(self):
-
-        if hasattr(self, 'canvas'):
-
-            pass
-
-        else:
-
-            self.canvas = FigureCanvas(Figure(figsize=(5,4)))
-            self.ax = self.canvas.figure.add_subplot(111)
-
-        if hasattr(self, 'ax'):
-
-            self.ax.clear()
-
-        else:
-
-            self.canvas = FigureCanvas(Figure(figsize=(5,4)))
-            self.ax = self.canvas.figure.add_subplot(111)
-
-        # Note que aqui utiliza a ideia
-        # de retornar uma array. O elemento de 
-        # endereço 0 retorna a array de cargas 
-        # e o endereço 2 retorna a array de raios
-        self.ax.errorbar(self.alterarVisibilidadeGota()[2], self.alterarVisibilidadeGota()[0], xerr=self.alterarVisibilidadeGota()[3], yerr=self.alterarVisibilidadeGota()[1], label=f'{self.voltagem} V', color="black", fmt="x", markersize=10, capsize=5)
-
-        # Aumentando a grossura das bordas do gráfico
-        self.ax.spines['top'].set_linewidth(2)
-        self.ax.spines['bottom'].set_linewidth(2)
-        self.ax.spines['left'].set_linewidth(2)
-        self.ax.spines['right'].set_linewidth(2)
-
-        # Aumentando a fonte dos números dos eixos
-        self.ax.tick_params(axis='both', labelsize=14)
-
-        # Diminuindo intervalos entre os ticks dos eixos
-        """
-        Vou deixar em stand-by por enquanto
-        self.ax.xaxis.set_major_locator(MultipleLocator(0.01))
-
-        self.ax.yaxis.set_major_locator(MultipleLocator(0.01))"""
-
-        # Colocando os títulos nos eixos
-        self.ax.set_xlabel("Raio (m)", fontsize=14)
-
-        self.ax.set_ylabel("Carga (C)", fontsize=14)
-
-        self.ax.legend(fontsize=12)
-
-        self.canvas.draw()
-
-        if not hasattr(self, 'toolbar'):
-
-            self.toolbar = NavigationToolBar(self.canvas, self)
-
-        self.layout.addWidget(self.toolbar)
-
-        self.layout.addWidget(self.canvas)
-
-    ####################################
-    ####################################
-    ####################################
-    # Recursos que muito provavelmente # 
-    # serão utilizados no futuro #######
-    ####################################
-    ####################################
-    ####################################
-
-    """plt.scatter(self.arrayDasArraysVelSubInstantes[i], self.arrayDasArraysVelSub[i], color="red", marker='.')
-
-        plt.scatter(self.arrayDasArraysVelDesInstantes[i], self.arrayDasArraysVelDes[i], color="blue", marker='.')
-
-        plt.plot(dataFrameVelocidades['t'], dataFrameVelocidades['vy'], color='black', linestyle='--')
-
-        plt.title('Velocidade de subida em vermelho e velocidade de descida em azul')
-        plt.xlabel('Instante (s)')
-        plt.ylabel('Velocidade vertical (m/s)')
-        plt.gcf().canvas.manager.set_window_title(f"Velocidade em função do tempo para {arrayNomesTxt[i]}")
-
-        plt.savefig(os.path.join(pastaResultados, f"grafico{arrayNomesTxt[i]}_var{self.varredura}.png"), dpi=300, bbox_inches='tight')
-
-        plt.show()"""
-    
-    #subpastaArquivos = f"{arrayNomesTxt[i]}"
-
-    #caminho = os.path.join(pastaResultados,subpastaArquivos)
-
-    #os.makedirs(f"{pastaResultados}/{subpastaArquivos}", exist_ok=True)
-
-    #caminho = os.path.join(pastaResultados,subpastaArquivos)
-
-    #caminho_arquivo_resultadosVelSub = os.path.join(caminho, f"velSub.csv")
-
-    #caminho_arquivo_resultadosVelDes = os.path.join(caminho, f"velDes.csv")
-
-    #csv_VelSub = []
-
-    #csv_VelDes = []
-
-    """for velocidadeSubida in self.arrayDasArraysVelSub[i]:
-
-        csv_VelSub.append(velocidadeSubida)"""
-
-    #dfVelSub = pd.DataFrame(csv_VelSub, columns=["Velocidade de subida"])
-
-    #dfVelSub.to_csv(caminho_arquivo_resultadosVelSub, sep="\t", index=True)
-
-    """for velocidadeDescida in self.arrayDasArraysVelDes[i]:
-
-        csv_VelDes.append(velocidadeDescida)"""
-
-    #dfVelDes = pd.DataFrame(csv_VelDes, columns=[ "Velocidade de descida"])
-
-    #dfVelDes.to_csv(caminho_arquivo_resultadosVelDes, sep="\t", index=True)
-
-    #dataFrameEstatisticas = pd.DataFrame(estatisticas)
-
-    #caminho_arquivo_estatisticas = os.path.join(pastaResultados, "estatisticas.csv")
-
-    #dataFrameEstatisticas.to_csv(caminho_arquivo_estatisticas, sep="\t", index=True)
+            return "Confiável"
 
 if __name__ == "__main__":
-    #O erro do sistema vai ser direcionado ao método global (Acho)
+
+    # O erro do sistema vai ser direcionado ao método global
     sys.excepthook=capturarExcecao
-    #Tente
+
+    # Tente
     try:
 
         app = QApplication(sys.argv)
@@ -1465,9 +1723,8 @@ if __name__ == "__main__":
 
         sys.exit(app.exec_())
         
-    #Exceto se
+    # Exceto se
     except Exception as e:
 
-
-        #Utiliza o método global para mostrar o erro no código
+        # Utiliza o método global para mostrar o erro no código
         capturarExcecao(*sys.exc_info())

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Preencha com seus dados</string>
   </property>
   <widget class="QWidget" name="centralwidgetAtribuicao">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -480,7 +480,7 @@
                       <enum>QFrame::NoFrame</enum>
                      </property>
                      <property name="text">
-                      <string>Constantes</string>
+                      <string>Parâmetros</string>
                      </property>
                     </widget>
                    </item>
@@ -753,6 +753,59 @@
            </layout>
           </widget>
          </item>
+         <item row="2" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+          <widget class="QFrame" name="frame_botaoExecutar">
+           <property name="minimumSize">
+            <size>
+             <width>300</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>900</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pushButton_executar">
+              <property name="text">
+               <string>Executar</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBoxImagemInvertida">
+              <property name="text">
+               <string>As gravações foram feitas em um microscópio com imagem invertida?</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QFrame" name="frameSecaoLabelPastArquiv">
            <property name="minimumSize">
@@ -878,52 +931,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="2" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-          <widget class="QFrame" name="frame_botaoExecutar">
-           <property name="minimumSize">
-            <size>
-             <width>300</width>
-             <height>38</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>300</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="pushButton_executar">
-              <property name="text">
-               <string>Executar</string>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>
